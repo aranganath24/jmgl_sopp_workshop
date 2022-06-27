@@ -18,7 +18,7 @@ The workshop has several learning objectives. Among other things, you will learn
 * Make static maps and interactive web maps in R Studio using the *tmap* package
 * Export your maps from R Studio so they can be embedded in your reports and websites
 
-Most broadly, and most importantly, you will gain an appreciation for how to use real-world social scientific geospatial data to better understand important social problems, and use this understanding to reflect on possible ways to address these problems. 
+Most broadly, and most importantly, you will gain an appreciation for how to use real-world social scientific and geospatial data to better understand important social problems, and use this understanding to reflect on possible ways to address these problems. 
 
 ## Data
 
@@ -36,7 +36,7 @@ In order to follow along with the lesson, you must install both R and R Studio. 
 
 ## The R Studio Interface
 
-If you haven’t used R Studio before, you can take a quick tour of the R Studio interface and get oriented by consulting this Data Carpentry tutorial titled [Introduction to R and R Studio](https://datacarpentry.org/r-intro-geospatial/01-rstudio-intro/index.html). See, in particular the section of the tutorial titled “Introduction to R Studio.”
+If you haven’t used R Studio before, you can take a quick tour of the R Studio interface and get oriented by consulting this Data Carpentry tutorial titled [Introduction to R and R Studio](https://datacarpentry.org/r-intro-geospatial/01-rstudio-intro/index.html). See, in particular, the section of the tutorial titled “Introduction to R Studio.”
 
 ## Install and load packages
 
@@ -71,7 +71,7 @@ If you're unfamiliar with the concept of file paths, the easiest way to set your
 + When you hover over the **Set Working Directory** button, a subsidiary menu that contains a button that says **Choose Directory** will open; click this **Choose Directory** button. 
 + In the dialog box that opens up, navigate to the directory that contains the downloaded workshop data, select it, and click "Open". At this point, your working directory should be set!
 
-*Alternatively*, if you are familiar with the concept of file paths, and know the file path to the folder containing the downloaded datasets, you can set the working directly using the **```setwd()```** function, where the argument to the function is the relevant file path enclosed in quotation marks. For example:
+*Alternatively*, if you are familiar with the concept of file paths, and know the file path to the folder containing the downloaded datasets, you can set the working directory using the **```setwd()```** function, where the argument to the function is the relevant file path enclosed in quotation marks. For example:
 
 ```{r, eval=FALSE}
 # Setting the working directory programmatically
