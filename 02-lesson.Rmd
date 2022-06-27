@@ -1,0 +1,1204 @@
+# Loading data
+
+Let's begin by reading in the dataset on State Patrol traffic stops released by the Stanford Open Policing Project. The data can be downloaded from the [Stanford Open Policing Project data page](https://openpolicing.stanford.edu/data/), but has also been made available to you as part of the workshop materials. This data is stored as a CSV file.
+
+Once the traffic patrol data has been downloaded into your working directory, pass the name of the file (along with its extension) to the **```read_csv()```** function, and assign it to an object. Here, we'll assign the traffic patrol data to an object named ```co_traffic_stops```. Note that the name of an object is arbitrary, but ideally, it should meaningfully describe the data that has been assigned to it. 
+
+```{r, eval=FALSE}
+# Read in Stanford police data for Colorado and assign to object named 
+# "co_traffic_stops"
+co_traffic_stops<-read_csv("co_statewide_2020_04_01.csv")
+```
+
+```{r, cache=TRUE, echo=F, comment=""}
+co_traffic_stops<-read_csv("https://www.dropbox.com/s/r7oydximjp46ylh/co_statewide_2020_04_01.csv?dl=1")
+```
+
+Once the traffic patrol data has been read into R studio and assigned to an object, we can print the contents of the dataset to the console by typing the name of that object into the R Studio console or by printing (and running) the name of the object from a script (note that only the first few records will be printed to the console):
+
+```{r, comment=""}
+# Print the contents of "co_traffic_stops" (i.e. the CO traffic patrol data) 
+# to the console; the first few records of the dataset will print
+co_traffic_stops
+```
+
+We can also view the ```co_traffic_stops``` object (or, for that matter, any dataset in R Studio) within the R Studio data viewer by passing the name of the relevant object to the **```View()```** function:
+
+```{r}
+# Inspect co_traffic_stops in the R Studio data viewer
+View(co_traffic_stops)
+```
+
+# Cleaning and filtering data
+
+To make things tractable (after all, the entire dataset has more than 3,000,000 observations!), let's focus our attention on Colorado traffic patrol from the year 2010; this also has the advantage of allowing us to eventually use 2010 census data in crafting our measure of racial bias in traffic stops. Note that currently, there isn't a separate field which contains the year in which a particular stop took place; rather, there is a "date" field, in which the date is stored in YYYY-MM-DD format. The easiest way to extract observations from the year 2010 is therefore to first extract the YYYY information from the "date" field, and use that information to make a new "Year" field that only contains the year of a given stop; we can then extract the 2010 observations based on this newly generated "Year" field. 
+
+## Create a "Year" field
+
+To create this new "Year" field within ```co_traffic_stops```, we can use the **```mutate()```** function, which is a *tidyverse* function that allows us to define new variables within a dataset, and the **```substr()```** function, which allows us to extract a subset of a given string.
+
+Below, we take the data in the ```co_traffic_stops``` object, and then create a new column named "Year" using the **```mutate()```** function; we set this column equal to the the first four digits of the existing "date" column by passing the expression that reads ```co_traffic_stops$data, 1, 4``` to the **```substr()```** function. We then use the the assignment operator (```<-```) to assign this change back to the ```co_traffic_stops``` object, which permanently updates the dataset with the addition of the new "Year" field:
+
+```{r}
+# Creates "Year" field, that contains the year of a given stop, 
+# in "co_traffic_stops"
+co_traffic_stops<-co_traffic_stops %>% 
+                    mutate(Year=substr(co_traffic_stops$date, 1,4))
+```
+
+You might have noticed a mysterious symbol in the above code that comes immediately after ```co_traffic_stops``` and immediately before calling the **```mutate()```** function in the next line. This symbol is known as a “pipe” (```%>%```). The pipe operator effectively takes the contents to its left, and then uses these contents as an input to the code on its right. Here, the pipe takes the contents of ```co_traffic_stops``` object on its left, and then feeds this data into the **```mutate()```** function on its right. In other words, the pipe operator links the code on its left to the code on its right, and establishes that the data which is to be modified using the **```mutate()```** function is the data assigned to ```co_traffic_stops```. We will use the pipe operator throughout the lesson to chain together functions in this manner. 
+
+Let's check the updated ```co_traffic_stops``` object and make sure that the new field has been successfully created:
+
+```{r, echo=FALSE}
+co_traffic_stops<-co_traffic_stops %>% relocate(county_name, date, Year)
+```
+
+```{r, comment=""}
+# prints contents of "co_traffic_stops"
+co_traffic_stops
+```
+
+Note the newly created Year field above. We can also check to make sure that the "Year" field has been successfully created by viewing ```co_traffic_stops``` in the R Studio data viewer with ```View(co_traffic_stops)```.
+
+## Filter by year
+
+Now that we have created the "Year" field, we can use it to extract the 2010 observations using the **```filter()```** function , and assign the filtered dataset of 2010 stops to a new object named ```co_traffic_stops_2010```:
+
+```{r}
+# Extract 2010 observations and assign to a new object named 
+# "co_traffic_stops_2010"
+co_traffic_stops_2010<-co_traffic_stops %>% filter(Year==2010)
+```
+
+```{r, echo=FALSE}
+co_traffic_stops_2010<-co_traffic_stops_2010 %>% relocate(date, Year, county_name, subject_race)
+```
+
+When we print the contents of the newly created ```co_traffic_stops_2010``` object, note that the observations are now only from 2010. 
+
+```{r, comment=""}
+# Print contents of "co_traffic_stops_2010" object
+co_traffic_stops_2010
+```
+
+# Transforming Data
+
+Now that we have created a new dataset that contains information on traffic stops from our year of interest (2010), let's do a bit of work with the data so that we can find out the total number of traffic stops within each county, and the number of stops within each county that involved a Black motorist. 
+
+## Tabulate county-level count of traffic stops by race
+
+First, let's find out the racial breakdown of stops for each county, using the data in the "subject_race" field of ```co_traffic_stops_2010```.
+
+Below, we take the ```co_traffic_stops_2010``` object, declare "county_name" as a grouping variable using ```group_by(county_name)```, and then count up the number of stops associated with each racial category within each county using ```count(subject_race)```. The dataset thats results from these operations is assigned to a new object named ```co_county_summary```:
+
+```{r}
+# Compute county-level count of traffic stops by race
+co_county_summary<-co_traffic_stops_2010 %>% 
+                    group_by(county_name) %>% 
+                    count(subject_race) 
+```
+
+Let's print the first few rows from the dataset and observe its structure:
+
+```{r, comment=""}
+# Prints contents of "co_county_summary"
+co_county_summary
+```
+
+Note that each row contains information on the number of times a person from a given racial category was stopped by the traffic police in a given county. For example, in Adams County, CO, Asian/Pacific Islander motorists were stopped 582 times, Black motorists were stopped 1208 times, and white motorists were stopped 20225 times. The dataset contains information on the racial and ethnic breakdown of police stops for each county in Colorado, in the year 2010. 
+
+## Reshape the data
+
+Note that ```co_county_summary``` is currently a "long" dataset, in which there are multiple rows associated with each county; each row corresponds to a distinct county/racial category combination, and the ```n``` column provides information on the number of stops associated with that county/racial category pairing. 
+
+It will be easier to instead work with a "wide" dataset, in which each county is associated with a single row, and each racial category is assigned to its own column. Each cell in this "wide" dataset would correspond to the number of stops associated with a given county (defined by the row) for a given racial category (defined by the column). 
+
+To reshape the dataset from its current "long" format into a "wide" format, we can use the **```pivot_wider()```** function. The code below takes the current ```co_county_summary``` data object (in "long" format), and then transforms it into a "wide" format with the expression that reads ```pivot_wider(names_from=subject_race, values_from=n)```. The ```names_from``` argument specifies the name of the current column which contains the categories which we want to transform into columns (here, ```subject_race```), while the ```values_from``` argument specifies the name of the current column which contains the values that will be associated with each county/racial category combination (here, ```n```). Finally, the code below assigns the transformed dataset to a new object named ```co_county_summary_wide```:
+
+```{r}
+# Transforms "co_county_summary" from long format to wide, and assigns 
+# the reshaped dataset to a new object named "co_county_summary_wide"
+co_county_summary_wide<-co_county_summary %>% 
+                        pivot_wider(names_from=subject_race, values_from=n)
+```
+
+Let's print the contents of ```co_county_summary_wide``` to ensure that the data has indeed been transformed into a "wide" format:
+
+```{r, comment=""}
+# prints contents of "co_county_summary_wide"
+co_county_summary_wide
+```
+
+Indeed, we can see that each row is now associated with a single county, and each column is now associated with a given racial category. 
+
+## Calculate total stops for each county in ```co_county_summary_wide```
+
+Now that we have our dataset in "wide" format, let's create a new column, named "total_stops" that contains information on the total number of traffic stops for each county. We can create this column by calculating the sum total of stops across all of the racial categories for each county, which yields the total number of stops for each county. 
+
+The code below takes the ```co_county_summary_wide``` object, and then calls the **```rowise()```** function, which allows us to make calculations across each row in a data frame. It then creates a new column, called "total_stops" using the now-familiar **```mutate()```** function; this "total_stops" column is populated by taking the sum of traffic stops across racial categories for each county. This is accomplished with the expression that reads ```sum(c_across(where(is.integer)), na.rm=TRUE)```. This expression can be translated as follows: "for each row in the dataset, calculate the sum across the columns whenever the value in a column is an integer; whenever a cell value is 'NA', simply ignore it in the calculation." We'll assign the dataset, with the newly added "total_stops" column, back to the same ```co_county_summary_wide``` object; this effectively overwrites the contents of the current ```co_county_summary_wide``` object (a dataset without the "total_stops" column), with the new dataset (which does have the newly populated "total_stops" column).  
+
+```{r}
+# Takes the existing "co_county_summary_wide" dataset, and creates a new column 
+# called "total_stops" that sums the values across columns for each row; 
+# the revised dataset is assigned back to "co_county_summary_wide", 
+# which overwrites the object's previous contents with the revised dataset
+co_county_summary_wide<-co_county_summary_wide %>% 
+                        rowwise() %>% 
+                        mutate(total_stops=sum(c_across(where(is.integer)), 
+                                               na.rm=TRUE)) 
+```
+
+```{r, echo=FALSE}
+co_county_summary_wide<-co_county_summary_wide %>% relocate(county_name, total_stops)
+```
+
+Let's print the contents of the ```co_county_summary_wide``` object and confirm that the new column has been successfully created:
+
+```{r, comment=""}
+# Prints updated contents of "co_county_summary_wide"
+co_county_summary_wide
+```
+
+## Clean ```co_county_summary_wide``` and assign to new object
+
+Let's clean up the ```co_county_summmary_wide``` dataset a bit more, so as to to make it even easier to work with. First, because our interest in this workshop is in exploring the possibility that Black motorists suffer disproportionately high traffic stop rates (relative to their share of the overall adult population), let's create a new object that only contains the data that is essential for the subsequent analysis: the county's name ("county_name"), the number of Black motorists that were stopped ("black"), and the total number of stops in the county across all racial categories ("total_stops).
+
+The code below takes the existing ```co_county_summary_wide``` object, and then uses the **```select()```** function to select the columns we want to keep. It then assigns this selection to a new object named "co_county_black_stops": 
+
+```{r}
+# Selects the "county_name", "black", and "total_stops" columns 
+# from the "co_county_summary_wide" object, and assigns the selection 
+# to a new object named "co_county_black_stops"
+
+co_county_black_stops<-co_county_summary_wide %>%
+                        select(county_name, black, total_stops) 
+                        
+```
+
+Let's print the contents of the newly created ```co_county_black_stops``` object to ensure that these changes have been successfully implemented:
+
+```{r, comment=""}
+# Prints contents of "co_county_black_stops"
+co_county_black_stops
+```
+
+As expected, we now have a dataset that contains information on the total number of traffic stops for each Colorado county in 2010 ("total_stops"), and the number of traffic stops that involved Black motorists ("black"). 
+
+The name of the column containing information on the number of Black motorists stopped by the traffic patrol is simply "black", which was inherited from the initial Stanford Open Policing Project dataset. However, this column name is somewhat vague, and may cause confusion down the road when we work with census demographic data to generate our index of racial bias in traffic stops. Therefore, let's rename that column name to "black_stops" using the **```rename()```** function, and assign that change back to ```co_county_black_stops```:
+
+```{r}
+# Takes the existing "co_county_black_stops" object and renames the column named 
+# "black" to "black_stops"; assigns the modified dataset back to 
+# "co_county_black_stops", which overwrites the existing contents of 
+# "co_county_black_stops"
+co_county_black_stops<-co_county_black_stops %>%
+                        rename(black_stops=black)
+```
+
+Let's now print the modified ```co_county_black_stops``` object:
+
+```{r, comment=""}
+# Prints contents of "co_county_black_stops"
+co_county_black_stops
+```
+
+Note that the name of the column has successfully been changed, and is now more descriptive. 
+
+Finally, if we view ```co_county_black_stops``` within the R Studio data viewer (```View(co_county_black_stops)```), we'll note a small quirk in the dataset. In particular, while Colorado has 64 counties, the dataset has 65 rows; one of the rows is an extra row, with an "NA" value associated with the "county_name" field, and 20 total traffic stops associated with the "NA" county. Because we're interested in a county-level analysis, and these stops are not associated with an actual county, we'll go ahead and delete that row with the following code, which takes the current ```co_county_black_stops``` object, and then uses the **```filter()```** function to select only those rows for which "county_name" is NOT EQUAl (```!=```) to "NA"; after effectively deleting the row where "county_name" is set to "NA", the code assigns the modified dataset back to ```co_county_black_stops```: 
+
+```{r}
+# Takes the "co_county_black_stops" object and removes the row for which 
+# "county_name" is "NA"; assigns the modified dataset back to 
+# "co_county_black_stops", which overwrites the dataset that is 
+# currently assigned to that object
+co_county_black_stops<-co_county_black_stops %>% 
+                        filter(county_name!="NA")
+
+```
+
+Note that ```co_county_black_stops```  now contains 64 rows:
+
+```{r, comment=""}
+# Prints contents of "co_county_black_stops"
+co_county_black_stops
+```
+
+# Defining an index of racial bias in traffic stops
+
+Let's briefly take stock of where we are. We started with a massive dataset (over 3,000,000 observations) of traffic patrol stops in the state of Colorado over the course of almost a decade. Over several steps, we worked our way to a county-level dataset containing information on the total number of traffic stops, and the number of those stops involving a Black motorist, over the course of the year 2010. That dataset looks something like this:
+
+```{r, comment=""}
+# Prints contents of "co_county_black_stops"
+co_county_black_stops
+```
+
+Now, let's think about how to use this information to develop a measure of the extent to which traffic police stops may have been driven by racial bias (whether conscious or unconscious) against Black motorists. We might expect that in a discrimination-free world, the share of traffic stops for a given racial group will reflect that group's share of the overall adult (over-17) population (we'll consider the over-17 population as our baseline, since that is the demographic eligible to drive). For example, if the Black percentage of a given county's adult population is 5%, we could form a simple baseline expectation that in a discrimination-free world where "driving while Black" is not effectively criminalized, the percentage of traffic stops involving Black motorists would not exceed 5%. To the extent that the percentage of traffic stops involving Black motorists **did** exceed 5%, we might assume a statistical pattern consistent with racial discrimination.
+
+Based on this logic, a simple county-level indicator of anti-Black bias in traffic stops would simply be the difference between the percentage of traffic stops in a given county involving Black motorists, and the percentage of the county's overall population that is Black:
+
+**County-Level Traffic Stop Bias Index**= 
+*(Percentage of County Traffic Stops Involving Black Motorists)*-*(Percentage of County's Adult Population that is Black)* 
+
+As the value of this difference rises above 0, and we see higher positive values for this simple bias index, we might infer higher degrees of discrimination in traffic stops. 
+
+Of course, this is a very simple index, and sets aside many complexities (for example, commuting and driving patterns, among other things). However, despite its simplicity, the intuition behind the index is often used in the social science literature on the topic (Stelter et al., 2021); at least to a first approximation, therefore, this index will give us a meaningful way to identify counties in which the behavior of Traffic Patrol might merit greater public scrutiny, on account of disproportionately high stop-rates for the Black population. 
+
+Let's create this index for Colorado counties in the year 2010. Note that we already have the data to compute the first part of the bias index (i.e. the percentage of traffic stops involving Black motorists); this is contained in ```co_county_black_stops```:
+
+```{r, comment=""}
+# prints contents of "co_county_black_stops"
+co_county_black_stops
+```
+
+Let's therefore turn to calculating the second part of the index: the percentage of each county's population adult population that is Black. We'll carry out this calculation using demographic data from the 2010 decennial census. 
+
+## Read in 2010 census data
+
+First, let's read in the census dataset that was provided to you at the start of workshop (for more information on how the data was extracted, please see the tutorial's Appendix) using the **```read_csv()```** function, and assign it to an object named ```co_counties_census_2010```:
+
+```{r, eval=FALSE, comment=""}
+# Reads in census data and assigns to object named "co_counties_census_2010"
+co_counties_census_2010<-read_csv("co_county_decennial_census.csv")
+```
+
+```{r, echo=FALSE, comment=""}
+# Reads in census data and assigns to object named "co_counties_census_2010"
+co_counties_census_2010<-read_csv("https://www.dropbox.com/s/kq94707fmcdbc0w/co_county_decennial_census.csv?dl=1") 
+```
+
+Let's print the contents of this census dataset: 
+
+```{r, comment=""}
+# Prints contents of "co_counties_census_2010"
+co_counties_census_2010
+```
+
+Note that the "total_pop" variable contains county-level information on the overall population (i.e. all age groups and all racial categories), the "total_pop_over17" variable contains information on the adult (over-17) population (for all racial groups), and the "total_black_pop_over17" variable contains information on the adult (over-17) Black population for each county. We can use the latter two variables to compute the second part of the bias index we defined above.
+
+## Join census data to ```co_county_black_stops```
+
+Before calculating the second component of the bias index, however, so, , let's join the census dataset we just viewed (```co_counties_census_2010```) to the dataset containing information on county-level police stops (```co_county_black_stops```); this will allow us to calculate both components of the bias index from the single dataset that results from this join. 
+
+The code below uses the **```full_join()```** function to join ```co_counties_census_2010``` (the second argument), to ```co_county_black_stops``` (the first argument), using the "county_name" column (from ```co_county_black_stops```) and the "County" column (from ```co_counties_census_2010```) as the join fields; it assigns the dataset which results from the join to a new object named ```co_counties_census_trafficstops```:
+
+```{r}
+# Joins "co_counties_census_2010" to "co_counties_black_stops" using the
+# "county_name" and "County" fields as the join fields; assigns the product 
+# of the join to an object named "co_counties_census_trafficstops"
+
+co_counties_census_trafficstops<-
+  full_join(co_county_black_stops, co_counties_census_2010,
+            by=c("county_name"="County"))
+```
+
+When we open ```co_counties_census_trafficstops```, we should see information from both of the constituent datasets (```co_county_black_stops``` and ```co_counties_census_2010```):
+
+```{r, comment=""}
+# Prints contents of "co_counties_census_trafficstops"
+co_counties_census_trafficstops
+```
+
+## Define the variables that will be used in the bias index
+
+Now that we have all the information required to calculate both components of the bias index in one dataset, let's calculate the constituent parts of the bias index. The code below takes the current ```co_counties_census_trafficstops``` object that we created above, and then uses the **```mutate()```** function to create two new variables. The first variable, named "black_stop_pct", is defined as the percentage of traffic stops that involved a Black motorist. The second variable, named "black_pop_pct", is defined as the percentage of a given county's adult population that is Black. The dataset that includes these two new variables is assigned back to ```co_counties_census_trafficstops```:
+
+```{r}
+# Takes "co_counties_census_trafficstops" and then creates two new variables; 
+# one new variable is named "black_stop_pct" (the Black percentage of 
+# traffic stops) and the other is "black_pop_pct" (the Black percentage 
+# of the over-17 population; assigns the updated dataset back to
+# co_counties_census_trafficstops"
+
+co_counties_census_trafficstops<-
+  co_counties_census_trafficstops %>% 
+      mutate(black_stop_pct=((black_stops/total_stops)*100),
+             black_pop_pct=((total_black_pop_over17/total_pop_over17)*100))
+```
+
+```{r, echo=FALSE}
+co_counties_census_trafficstops<-co_counties_census_trafficstops %>% 
+                                    relocate(county_name, black_stop_pct, black_pop_pct)
+```
+
+Having created these two new variables (i.e. the components of the bias index we'll calculate below) in ```co_counties_census_trafficstops```, let's view the updated dataset:
+
+```{r, comment=""}
+# Prints contents of "co_counties_census_trafficstops" object
+co_counties_census_trafficstops
+```
+
+## Calculate the bias index
+
+Before using the county-level "black_stop_pct" and "black_pop_pct" variables we created above to generate county-level measures of our bias index, let's first calculate an aggregated bias index for the state of Colorado as a whole. 
+
+The mini-script below uses the information in ```co_counties_census_trafficstops``` to calculate:
+
+* The total number of traffic stops involving Black motorists across all counties (assigned to the ```colorado_total_black_stops``` object)
+* The total number of traffic patrol stops across all racial categories (assigned to the ```colorado_total_stops``` object). 
+* The total adult (over-17)) Black population in Colorado (assigned to ```colorado_adult_blackpopulation```).
+* The total adult (over-17) population in Colorado, across all races (assigned to ```colorado_adult_overall```). 
+* The percentage of traffic patrol stops involving a Black motorist in Colorado, by dividing ```colorado_total_black_stops``` by ```colorado_total_stops``` and multiplying by 100 (assigned to ```black_stop_pct_CO```).
+* The Black percentage of Colorado's overall population, by dividing ```colorado_adult_blackpopulation``` by ```colorado_adult_overall``` and multiplying by 100 (assigned to ```black_over17_population_pct_CO```). 
+
+Finally, it uses ```black_stop_pct_CO``` and ```black_over17_population_pct_CO``` to generate a state-wide value for the bias index, by subtracting the latter from the former; this value is assigned to the object named ```CO_bias_index```:
+
+```{r}
+# Calculates the total number of Black traffic stops in Colorado and assigns 
+# the value to an object named "colorado_total_black_stops"
+colorado_total_black_stops<-sum(co_counties_census_trafficstops$black_stops, 
+                                na.rm=T)
+
+# Calculates the total number of traffic stops in Colorado and assigns the 
+# value to an object named "colorado_total_stops"
+colorado_total_stops<-sum(co_counties_census_trafficstops$total_stops, na.rm=T)
+
+# Calculates the total adult (over-17) Black population in CO and assigns the value to 
+# an object named "colorado_adult_blackpopulation"
+colorado_adult_blackpopulation<-
+  sum(co_counties_census_trafficstops$total_black_pop_over17, na.rm=T)
+
+# Calculates the total adult (over-17) population in CO and assigns the value to an 
+# object named "colorado_adult_overall"
+colorado_adult_overall<-sum(co_counties_census_trafficstops$total_pop_over17, 
+                            na.rm=T)
+
+# Calculates the percentage of CO traffic patrol stops involving a Black motorist
+# and assigns the value to an object named "black_stop_pct_CO"
+black_stop_pct_CO<-(colorado_total_black_stops/colorado_total_stops)*100
+
+# Calculates the percentage of the Colorado's 17+ population that is Black and 
+# assigns the value to an object named "black_over17_population_pct_CO"
+black_over17_population_pct_CO<-(colorado_adult_blackpopulation/
+                                   colorado_adult_overall)*100
+
+# Calculates the bias index for the state of Colorado as a whole, by computing 
+# the difference between "black_stop_pct_CO" and 
+# "black_over17_population_pct_CO"; assigns the result to an object 
+# named "CO_bias_index"
+CO_bias_index<-(black_stop_pct_CO)-(black_over17_population_pct_CO)
+```
+
+Now, let's print the value of ```CO_bias_index```:
+
+```{r, comment=""}
+# Prints value of "CO_bias_index"
+CO_bias_index
+```
+
+Interestingly, the value of the aggregate state-level bias index we've calculated is negative; specifically, this result suggests that in 2010, the Black share of traffic stops in Colorado was about 1.11 percentage points less than the Black share of Colorado's adult population. At first glance, this might suggest that "driving while black" was not criminalized in Colorado (during 2010, the year under consideration), according to our simple bias indicator. 
+
+However, it might still be the case that there are specific areas in the state where racial bias in traffic stops **is** a problem, and focusing on an aggregated state-level measure of the bias index obscures possible micro-level variation in patterns of anti-Black bias with respect to traffic stops. Documenting this micro-level variation is an important task, since it would allow us to identify "problem areas" that might be excessively punitive towards Black drivers. The remainder of the lesson  attempts to document this county-level micro-geography of systemic bias in traffic stops (as measured by the index we've defined). 
+
+We'll begin by creating a new variable in ```co_counties_census_trafficstops```, which we'll call "bias_index", that contains the bias index for each county in the dataset (calculated by subtracting “black_pop_pct” from “black_stop_pct" for each county). The code below creates this new "bias_index" variable, and assigns the dataset with this new variable back to the ```co_counties_census_trafficstops``` object:
+
+```{r}
+# Creates new variable in "co_counties_census_trafficstops" named "bias_index" 
+# that is defined as the difference between the existing "black_stop_pct" and   
+# "black_pop_pct" variables
+co_counties_census_trafficstops<-
+  co_counties_census_trafficstops %>% 
+      mutate(bias_index=black_stop_pct-black_pop_pct)
+```
+
+```{r, echo=F}
+co_counties_census_trafficstops<-co_counties_census_trafficstops %>% 
+                                 relocate(county_name, bias_index)
+```
+
+Note that the county-level "bias_index" variable is now in the dataset assigned to the ```co_counties_census_trafficstops``` object:
+
+```{r, comment=""}
+# prints contents of "co_counties_census_trafficstops"
+co_counties_census_trafficstops
+```
+
+## Compute summary statistics for the bias index
+
+Now that we have our county-level measure of the bias index, let's document the spatial distribution of "bias_index" with respect to counties. A simple way to do so would be to  compute some basic summary statistics for the "bias_index" variable in ```co_counties_census_trafficstops```, which will give us a sense of how the bias index varies across counties. We can generate these summary statistics using the **```summary()```** function. 
+
+ Below, the argument to the **```summary()```** function, which reads ```co_counties_census_trafficstops$bias_index```, specifies that we want summary statistics for the "bias_index" variable that is in ```co_counties_census_trafficstops```:
+
+```{r, comment=""}
+# Produces summary statistics for "bias_index" variable calculated above
+summary(co_counties_census_trafficstops$bias_index)
+```
+
+This table of summary statistics shows that the mean bias index across counties during 2010 was 0.53 and the median value of the bias index was 0.47; this clearly suggests that even though the bias index for the state as a whole was negative, there were many counties with a ***positive*** bias index. In other words, many Colorado counties appear to have been stopping black motorists at disproportionately high rates relative to their share of the county population. Moreover, there is a fairly large range in the bias index with respect to counties; the county with the largest value for "bias_index" had an index of 4.26 (i.e. the share of Black motorists stopped by the police was 4.26 percentage points higher than the share of Black county residents in the over-17 age demographic), while the county with the smallest value for the index had an index value of -9.84 (i.e. the share of Black motorists stopped by police was 9.84 percentage points lower than the share of Black county residents in the 17+ age demographic). These basic results suggest that a few outlier parts of the state where racial bias (as we are measuring it here) does not appear to be a problem are driving down the state's overall bias index, despite the fact that in many areas of Colorado, Black motorists are indeed subject to disproportionately aggressive policing. 
+
+One way to quickly explore this possibility further might be to create a quick visualization that conveys county-level variation in the bias index. In Section 5.6, we'll visualize this county-level variation in the bias index on a simple graph.
+
+## Visualize county-level variation in the bias index using ```ggplot```
+
+There are many possible ways to visualize county-level variation in the "bias_index" variable. Here, we'll make a simple bar graph using *ggplot2*, a popular visualization package that is part of the *tidyverse* suite of packages. 
+
+Before making this graph, let's quickly make a new column in ```co_counties_census_trafficstops```, named "County", that takes the information in the existing "county_name" field and removes the part of the string that reads "County". This will result in a cleaner-looking graph, since we can more concisely convey that our geographic units are counties in the graph's main title.  
+
+The following code takes  the dataset currently assigned to  the```co_counties_census_trafficstops``` object, and then uses the **```mutate()```** function to create a new field named "County", which is populated by taking the existing "county_name" column and using the **```str_remove()```** function to remove the part of the "county_name" string that reads "County". It then assigns the modified dataset back to the ```co_counties_census_trafficstops``` object, which overwrites the previous version of the dataset: 
+
+```{r}
+# Creates new variable named "County" that removes "County" string
+# from "county_name" variable
+co_counties_census_trafficstops<-
+  co_counties_census_trafficstops %>% 
+     mutate(County=str_remove(county_name, " County"))
+```
+
+```{r, echo=FALSE}
+co_counties_census_trafficstops<-co_counties_census_trafficstops %>% 
+                                  relocate(county_name, County, bias_index)
+```
+
+Let's confirm that the new "County" field has been successfully created:
+
+```{r, comment=""}
+# prints "co_counties_census_trafficstops"
+co_counties_census_trafficstops
+```
+
+Now, we're ready to use *ggplot2* to make our bar graph. 
+
+The following code takes ```co_counties_trafficstops```, and then: 
+
+* Uses the **```drop_na()```** function to remove counties for which the "bias_index" value has an "NA" value (there are two such counties), so that they do not show up on the graph. 
+* It then initiates *ggplot2*  by calling the **```ggplot()```** function. 
+* It then uses the **```geom_col()```** function to indicate that the desired output is a bar graph. Within the **```geom_col()```** function, the expression that reads ```aes(x=County, y-bias_index)``` specifies which variables we want to represent on the graph, and how we want to represent those variables (i.e. which variable do we want on the x- axis, and which variable on the y-axis?). The instructions used to translate the variables in a tabular dataset into a visual representation are known as an "aesthetic mapping", which is abbreviated within the grammar of *ggplot2* to ```aes```.
+* After specifiying that we want a bar graph based on the ```co_counties_census_trafficstops``` object (with the "County" column mapped to the x-axis and the "bias_index" column mapped to the y-axis), we use the **```labs()```** function (short for "labels") to designate the graph's main title, and the labels for the x and y axes. 
+* In *ggplot2*, the **```theme()```** function is a versatile function that helps to customize the appearance of a *ggplot2* object; here, we set the ```axis.title.x``` argument equal to ```element_text(size=9)```, which effectively sets the size of the x axis labels. In addition, we set the ```plot.title``` argument within the **```theme()```** function equal to ```element_text(hjust=0.5)```, which effectively center-justifies the plot's main title.  Next, we use the **```scale_y_continuous()```** function to set the interval breaks of the y-axis; this range is defined using a vector passed to the ```breaks``` argument, where each numeric element of the vector denotes a desired interval break. 
+* The **```expand_limits()```** function allows us to expand the range of either axis beyond the range established by the axis interval markers; here, by specifying ```y=c(-10,10)``` as an argument to the **```expand_limits()```** function, we effectively stretch out the y-axis range from -10 to 10, even though the highest Y-axis tick-mark is set at 7.5. 
+* Finally, we assign the plot that is created with this code to a new object named ```bias_graph```:
+
+```{r}
+# Uses ggplot2 to create bar graph of "bias_index" variable, with "bias_index" 
+# on Y-axis and counties on X-axis
+bias_graph<-
+  co_counties_census_trafficstops %>% 
+  drop_na(bias_index) %>% 
+    ggplot()+
+      geom_col(aes(x=County, y=bias_index))+
+      labs(title="Racial Discrimination in Police Stops, by County (Colorado)", 
+           x="County", 
+           y="Bias Index=\nBlack Percentage of Overall Traffic Stops – 
+           Black Percentage of Overall Over-17 Population")+
+       theme(axis.title.x = element_text(size = 9), 
+             plot.title=element_text(hjust=0.5))+      
+       scale_y_continuous(breaks=c(-10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5))+
+       expand_limits(y=c(-10,10))
+```
+
+Let's print the contents of ```bias_graph``` and see what the plot looks like; it will appear in the "plots" tab on the bottom-right of your R Studio interface. 
+
+```{r}
+# Prints contents of "bias_graph"
+bias_graph
+```
+
+As we can see, the graph does show that certain counties have values around zero, or well below zero on the bias index, which drives down the overall value for the state; but in many other counties, the value of the "bias_index" variable is positive and substantively large. 
+
+While this graph does convey valuable information, it's a little bit confusing to look at; for example, the county names are squished together in a way that makes them unreadable. 
+
+A quick way to make the plot more readable is to invert the axes (such that counties are on the y-axis, and the bias index is arrayed along the x-axis). The code below is largely the same as the code in the previous code block. The differences are twofold, and contribute to a change in the map's appearance. First, the argument to 
+```geom_col``` looks a bit different. Instead of simply specifying ```(aes(x=County, y=bias_index)```, we instead specify ```(aes(x=reorder(County, bias_index), y=bias_index)```. The **```reorder()```** function is essentially specifying that we want the x-axis variable ("County"), to be arrayed in descending order with respect to "bias_index". Arraying the values in descending order makes for a graph that is easier to read. Second, we call the **```coord_flip()```** function, which inverts the axes such that the x-axis and y-axis (specified as arguments to **```geom_col()```**) are inverted. We'll assign this new plot to a new object named ```bias_graph_inverted```:
+
+```{r}
+# Uses ggplot to create bar graph of "bias_index" variable, with "bias_index" 
+# on X-axis and counties on y-axis; assigned to object named 
+# "bias_graph_inverted"
+bias_graph_inverted<-
+  co_counties_census_trafficstops %>% 
+    drop_na(bias_index) %>% 
+      ggplot()+
+        geom_col(aes(x=reorder(County, bias_index), y=bias_index))+
+        coord_flip()+
+       labs(
+         title="Racial Discrimination in Police Stops, by County (Colorado)", 
+         x="County", 
+        y="Bias Index=\nBlack Percentage of Overall Traffic Stops-
+        Black Percentage of Overall Over-17 Population")+
+        theme(axis.title.x = element_text(size = 9), 
+              plot.title=element_text(hjust=0.5))+      
+        scale_y_continuous(breaks=c(-10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5))+
+        expand_limits(y=c(-10,10))
+```
+
+Let's view the revised plot: 
+
+```{r, fig.width=8, fig.height=10}
+# prints contents of "bias_graph_inverted"
+bias_graph_inverted
+```
+
+We can see that those relatively small changes produced a more readable and informative plot. We can get a clear sense of how the traffic stops bias index varies across Colorado counties, and identify the counties where policing practices appear excessively punitive towards Black drivers. The plot clearly conveys why focusing solely on aggregated statistics might be problematic: such aggregated measures have the potential to obscure more granular patterns of bias across a state's jurisdictions. 
+
+# Mapping the bias index
+
+However, while the plot above allows us to identify the counties where CO State Patrol policing practices may deserve greater scrutiny, it is difficult to contextualize that information without a clear sense of where these counties are located. For example, we might want to know whether there are geographic clusters of counties with particularly high or low values for the bias index. And to the extent we find such geographic patterns, we can empower communities to address problems of systemic discrimination in an empirically-informed and geographically-aware manner. 
+
+In short, counties are spatial units, and creating a visualization where we can explicitly situate our “bias_index” variable in a meaningful geographic context might prove even more informative than a plot such as the one developed in the previous section (which of course does not provide information about where counties are located). In other words, it would be useful to display the bias index on a county-level map of Colorado, which will allow us to get a clearer sense of the granular spatial distribution of the bias index across the state. This section will walk through the process of creating such a map.
+
+## Read in and view the shapefile of CO counties
+
+In order to visualize our bias index on a map of Colorado counties, we need to first load a spatial dataset of Colorado counties into R Studio. A spatial dataset is simply a dataset that has geographic information attached to it; this geographic information can be used by geospatial software to render a map. 
+
+Let's load in the spatial dataset of Colorado counties that was provided to you at the start of the workshop. In particular, the spatial dataset that was provided to you is stored as a shapefile, which is a commonly used file format to store spatial datasets. We can load shapefiles into R Studio using the **```st_read()```** function from the *sf* package. Below, we'll load in our shapefile, and assign it to a new object named ```co_counties_shapefile```. Note that a given shapefile is comprised of several different files with various extensions; make sure that all of these files are in your working directory. However, the file name passed to the **```st_read()```** function must have an ".shp" extension, as below:  
+
+```{r, echo=-1, comment=""}
+setwd("co_counties/tl_2019_08_county/")
+# Reads in shapefile and assigns to object named "co_counties_shapefile"
+co_counties_shapefile<-st_read("tl_2019_08_county.shp")
+```
+
+Upon reading in the shapefile, you'll notice that some metadata about the shapefile is printed to the console. We see that the shapefile has a geometry type of "multipolygon" (other possible geometry types are points and lines), that there are 64 rows and 17 columns in the dataset, and that its coordinate reference system is NAD83. Coordinate reference systems are important to consider if you plan to do spatial analysis that involves calculations with spatially defined attributes; since we don't plan to carry out an analysis of this nature (we're only interested in using the spatial dataset as a way to visualize data), we can set this concept aside for the purpose of our workshop.
+
+Now, let's print the contents of ```co_counties_shapefile```:
+
+```{r, echo=FALSE}
+co_counties_shapefile<-co_counties_shapefile %>% relocate(geometry)
+```
+
+```{r, comment=""}
+# Prints contents of "co_counties_shapefile"
+co_counties_shapefile
+```
+
+Notice that this looks very much like a typical dataset, one that we can also view in R Studio's data viewer with ```View(co_counties_shapefile)```. The key element that makes this dataset different from a conventional dataset is contained in the "geometry" column. For each county, the geometry column contains a series of latitude/longitude pairs corresponding to that county's borders in the "real world". These lat/long pairs are  processed by GIS software, and used to render a visual representation of a county's geographic borders that reflects its "real-world" shape and location. When each row is rendered simultaneously, the result is a map of Colorado counties that can be used as a foundation for data visualization and analysis. 
+
+Within R Studio, we can use functions from the *tmap* package to visually render a spatial dataset's geographic attributes (stored in the "geometry" column), and thereby create a map. The code below uses the geometry information in ```co_counties_shapefile``` to render the Colorado county polygons as a map. First, we pass the name of the spatial object we'd like to map (```co_counties_shapefile```) to the **```tm_shape()```** function, and then use the **```tm_polygons()```** function to instruct the mapping utility that the spatial data in the "geometry" column must be interpreted and rendered as polygons (note that the two tmap functions are connected by a + sign, which is standard tmap syntax): 
+
+```{r, fig.asp=0.5, echo=-1}
+tmap_mode("plot")
+# Uses "geometry" information in "co_counties_shapefile" to create map of CO 
+# counties
+tm_shape(co_counties_shapefile)+
+  tm_polygons()
+```
+
+You should see a map that looks like this in the "Plots" tab on the bottom-right of your R Studio interface. 
+
+Below, we'll assign this basic map, which was rendered from ```co_counties_shapefile``` ,to a new object named ```co_counties_map```:
+
+```{r}
+# assigns map of CO polygons to new object named "co_counties_map"
+co_counties_map<-tm_shape(co_counties_shapefile)+
+                    tm_polygons()
+```
+
+Now, whenever we want to retrieve the map, we can simply print the name of the object to which it has been assigned: 
+
+```{r, fig.asp=0.5, comment=""}
+# prints contents of "co_counties_map"
+co_counties_map
+```
+
+In using *tmap* to translate the geographic information in the "geometry" column of our spatial dataset of Colorado counties into a visual representation, we produced a static map; in other words, we cannot do things like pan around the map, or zoom in and out. However, if we want to render a dynamic map where such things are possible, we can simply use the **```tmap_mode()```** function to change the setting of the *tmap* environment to "view", as below:
+
+```{r}
+# Sets tmap mode to "view"
+tmap_mode("view")
+```
+
+Now, if we open the ```co_counties_map``` object that we created earlier, *tmap* will render a dynamic and interactive map: 
+
+```{r}
+# Prints "co_counties_map" as a web map
+co_counties_map
+```
+
+You will be able to view this interactive map in the "Viewer" tab on the bottom right of your R Studio interface. This interactive map is essentially a web map, which we can easily export as an HTML file and embed on a website (if we so choose).
+
+If we want to switch back to making static maps, we can switch back to "plot" mode using the same **```tmap_mode()```** function:
+
+```{r}
+# Switches tmap mode back to "plot"
+tmap_mode("plot")
+```
+
+Once we're back in "plot" mode, *tmap* will render spatial objects as static maps. For instance, if we open ```co_counties_map``` again, it will render as a static map:
+
+```{r, fig.asp=0.5}
+# prints "co_counties_map" as a static plot
+co_counties_map
+```
+
+As we work with spatial data and maps in R Studio using *tmap*, we can easily toggle back and forth between "view" and "plot" modes, depending on our desired outputs. 
+
+## Join ```co_counties_census_trafficstops``` to the shapefile of Colorado counties
+
+Now that we've loaded and explored our spatial dataset of Colorado counties, and rendered it as a map, let's turn to the process of displaying the bias index on this county-level map.
+
+In order to display our data of interest on the map of Colorado counties that we generated above, we must first join the data on the bias index to the spatial dataset; once the bias index data is in our spatial dataset, we can use *tmap* functions to render a map that displays this data on the county polygons. 
+
+We can implement the join between a spatial dataset and a tabular dataset in much the same way as we implemented a join between two tabular datasets above in Section 6.2 (between the traffic stops dataset and the census dataset). 
+
+Below, the first argument to the **```full_join()```** function is the name of our spatial object of Colorado counties; the second argument is the name of the object which contains the "bias_index" data (which we want to merge into the spatial dataset). Finally, the third argument indicates that we want to join these datasets together using the field named "GEOID" (which is the same in both datasets), as the join field. We'll assign the expanded spatial dataset that results from the join to a new object named ```county_shapefile_biasIndex```:
+
+```{r}
+# Joins "co_counties_census_trafficstops" into "co_counties_shapefile" 
+# using GEOID as the join field; assigns the new joined dataset to a new 
+# object named "county_shapefile_biasIndex"
+county_shapefile_biasIndex<-
+  full_join(co_counties_shapefile, 
+            co_counties_census_trafficstops, by="GEOID")
+```
+
+```{r, echo=FALSE}
+county_shapefile_biasIndex<-county_shapefile_biasIndex %>% 
+                              relocate(NAME, geometry, bias_index)
+```
+
+Now, when we open ```county_shapefile_biasIndex```, we should see the "bias_index" variable in the dataset, along with the "geometry" information needed to render a map of Colorado counties: 
+
+```{r, comment=""}
+# prints contents of "county_shapefile_biasIndex"
+county_shapefile_biasIndex
+```
+
+## Display the bias index on a map of Colorado counties
+
+At this point, with our "bias_index" variable included in a spatially explicit dataset of Colorado counties, we are ready to visualize this data on a map, and observe how this measure of bias in traffic police stops varies geographically across counties. 
+
+### Make a rough draft of a map 
+
+Let's start by making the simplest possible map of the "bias_index" variable. Recall that earlier, we drew the Colorado county polygons with the following:
+
+```{r}
+# Uses tmap to render Colorado polygons based on geometry information in 
+# "county_shapefile_biasIndex" object
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons()
+```
+
+Now, to display actual county-level attribute data from the dataset on the map of Colorado counties, we can simply pass an argument to the **```tm_polygons()```** function. In particular, we can specify the column that contains the data we want to represent on the map, using the ```col``` argument to the **```tm_polygons()```** function. In our case, the name of the column that contains the data we want to display on the map is "bias_index", so we will specify ```col="bias_index"``` within the **```tm_polygons()```** function:
+
+```{r, fig.asp=0.5, warning=FALSE}
+# Creates map of "bias_index" variable from "county_shapefile_biasIndex" 
+# spatial object
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons(col="bias_index")
+```
+
+As you can see, we now have a county-level map of the Colorado "bias_index" data we created earlier. 
+Admittedly, this map is very rough; important elements of the map, such as the legend interval breaks and the color scheme, were chosen arbitrarily by *tmap*, and these arbitrary settings hinder the ability of the map to effectively convey information about the spatial distribution of "bias_index" across Colorado counties. 
+
+However, *tmap* allows us to customize our maps, and explicitly specify parameters that shape the map's appearance. Let's begin exploring some of these customization possibilities. In the code below, we still start out by passing ```county_shapefile_biasIndex``` to the **```tm_shape()```** function (so as to specify the spatial object we'd like to map), and passing ```col="bias_index``` to the **```tm_polygons()```** function (as before).
+
+However, we'll begin customizing the map by passing additional arguments to the **```tm_polygons()```** function: 
+
+* With respect to the color scheme, we'll designate a yellow-to-red color palette with ```palette="YlOrRd"```, and set 0 as the the point in the data distribution that corresponds to the midpoint of the palette (in other words, the hypothetical county where "bias_index" is exactly zero will be displayed in the color palette's median color). For more information on color options in R (including color and palette codes), see this useful [R Color cheatsheet](https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf). 
+* In the next three arguments to **```tm_polygons()```**, we'll begin customizing the map's legend. Setting ```textNA="No Data"``` specifies that the legend should label the category for counties with NA values for the bias index as "No Data", rather than the default label, which is "Missing". Setting ```n=5``` establishes that we want to group our data into five distinct intervals, which means our legend will have five breaks. Finally, setting ```style="jenks"``` specifies that we want to use the jenks algorithm to decide where to place those legend breaks (or in other words, how to break up the data into five distinct intervals). For more For more information on the Jenks Natural Breaks Classification, as well as other data partition algorithms, see this [useful guide to data classification methods](https://pro.arcgis.com/en/pro-app/2.7/help/mapping/layer-properties/data-classification-methods.htm).
+* Finally, we call the **```tm_layout()```** function, which allows us to customize the map's layout; within this function, we set ```frame=FALSE``` (which removes the map's frame, or bounding box) and ```legend.outside=TRUE``` (which places the legend outside the map's domain, so as to not interfere with the display of counties).
+
+```{r, fig.asp=0.5}
+# Creates map of "bias_index" from the "county_shapefile_biasIndex" object 
+# with yellow-to-red color scheme, five legend partitions based on the Jenks 
+# algorithm, and without a map frame/bounding box; counties with NA values 
+# are labeled with "No Data" in the legend, and the map's legend is placed outside 
+# the polygon display
+  tm_shape(county_shapefile_biasIndex)+
+      tm_polygons(col="bias_index", 
+                  palette="YlOrRd", 
+                  midpoint=0,
+                  textNA="No Data", 
+                  n=5,
+                  style="jenks")+
+      tm_layout(frame=FALSE, 
+               legend.outside=TRUE)
+```
+
+This is starting to look better; in the next two subsections, we'll explore how to further control the map's appearance by setting custom breaks and custom color schemes. 
+
+### Make a map with custom breaks
+
+Let's say that instead of using the Jenks (or some other algorithm) to partition our data into intervals, we want to set our own data intervals. Doing so might make sense here, especially since we want to clearly differentiate counties with a bias index less than or equal to zero from those that are above zero. We can specify our legend breaks in a numeric vector (i.e. a sequence of numbers) passed to the ```breaks``` argument within the **```tm_polygons()```** function. Below, we set ```breaks=c(-10,-5,0,2,4,5)```, which indicates that we want our intervals to be from -10 to -5; -5 to 0; 0 to 2; 2 to 4; and 4 to 5. Note that the "c" before the sequence of numbers bounded by parentheses is actually a function, which is used to indicate that the sequence of elements that follows must be interpreted as a vector. Also, note that we've removed the ```style="jenks"``` argument that we used above, since we're using custom legend breaks (rather than breaks implemented by the jenks algorithm). Other than those changes, other elements of the code below are the same as that used in the previous code block. 
+
+```{r, fig.asp=0.5}
+# Creates map of "bias_index" from the "county_shapefile_biasIndex" object with 
+# yellow-to-red color scheme, five legend partitions based on a vector passed 
+# to the "breaks" argument, and without a map frame/bounding box; counties with 
+# NA values are labeled with "No Data" in the legend, and the map's legend is 
+# placed outside the polygon display
+  tm_shape(county_shapefile_biasIndex)+
+    tm_polygons(col="bias_index", 
+                palette="YlOrRd", 
+                midpoint=0,
+                textNA="No Data",
+                breaks=c(-10,-5, 0, 2, 4, 5))+
+    tm_layout(frame=FALSE, 
+              legend.outside=TRUE)
+```
+
+### Make a map with custom colors 
+
+So far, we've been using a predefined color template ("YlOrRd") to display the range of values for "bias_index" on our map. While this color scheme might be a good start, it can sometimes be difficult to distinguish the colors on the map. One possible way to fix this might be to explore other possible predefined color schemes, and find one that makes colors easier to distinguish, given the data distribution for "bias_index". Another possibility is to specify our own colors for map's intervals. In order to do this, let's first first define a character vector, assigned to an object named ```my_colors```, that contains the colors we want to use (once again, a reminder color names are available on the R [Color Cheatsheet](https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf)):
+
+```{r}
+# defines vector of colors and assigns vector to an object named "my_colors"
+my_colors<-c("white", "peachpuff", "red1", "red4", "navy")
+```
+
+Now, we can pass this vector as an argument to the **```tm_polygons()```** function. Instead of setting ```palette=YlOrRd``` (as above), we instead set ```palette=my_colors```. The colors in the ```my_colors``` vector are assigned to the numeric intervals in order; that is, the interval from -10 to -5 is assigned the color "white" (the first color in the vector), the interval from -5 to 0 is assigned the color "peachpuff" (the second color in the vector), the interval from 0 to 2 is assigned the color "red1" (the third color in the vector), and so on. Everything else in the code remains the same as in the previous section: 
+
+```{r, fig.asp=0.5}
+# Creates map of "bias_index" from "county_shapefile_biasIndex" object 
+# using custom color palette defined in the "my_colors" vector
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons(col="bias_index", 
+              palette=my_colors, 
+              textNA="No Data",
+              breaks=c(-10,-5, 0, 2, 4, 5))+
+  tm_layout(frame=FALSE, 
+            legend.outside=TRUE)
+```
+
+We can see that these colors are easier to distinguish, which makes it easier to quickly scan the map for relevant patterns.  
+
+It is also worth reminding ourselves that it's possible to assign the maps we create using *tmap* to objects. For example, let's assign the last map we created to a new object named ```traffic_bias_map_continuous```:
+
+```{r}
+# Creates map showing variation in "bias_index" across CO counties, and assigns 
+# the map to object named "traffic_stop_map_continuous"
+traffic_bias_map_continuous<-
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons(col="bias_index", 
+              palette=my_colors, 
+              textNA="No Data", 
+              breaks=c(-10,-5, 0, 2, 4, 5))+
+  tm_layout(frame=FALSE, 
+            legend.outside=TRUE)
+```
+
+Now, we can bring up this map whenever we need it by printing the name of the object to which it is assigned:
+
+```{r, fig.asp=0.5}
+# Prints contents of "traffic_stop_map_continuous"
+traffic_bias_map_continuous
+```
+
+## Make a categorical map 
+
+So far, we have been mapping the ```bias_index``` variable, which is a continuous variable. This has the advantage of allowing us to visualize the full extent of variation in the ```bias_index``` variable. However, there are also other ways we might visualize the data. For example, we could transform ```bias_index``` from a continuous numeric variable into a categorical variable, and visualize this categorical variable on a map. 
+
+More specifically, let's say we want to use a map to clearly distinguish the counties where racial bias in traffic stops appears to be a problem (where "bias_index">0) and those counties in which it does NOT appear to be a problem (where "bias_index"<=0). On the one hand, this would throw out useful information regarding the full extent of variation for the "bias_index" indicator, but on the other hand, it could yield a more stark and focused map. 
+
+To build such a map, the first step is to create a new categorical variable, based on the continuous "bias_index" variable, within ```county_shapefile_biasIndex```. In the code below, we take the existing spatial dataset assigned to the ```county_shapefile_biasIndex``` object, and then use the **```mutate()```** function to create a new variable named "apparent_bias." This new "apparent_bias" variable will be coded as "Apparent Bias" for counties where "bias_index">0, and coded as "No Apparent Bias" for all other counties (i.e. where the bias index is less than or equal to zero). This is accomplished using the **```ifelse()```** function. The first argument to the **```ifelse()```** function is a given condition (here ```bias_index>0```). The second argument specifies the value that the new "apparent_bias" variable should take when that condition is true; the third argument specifies the value that the "apparent_bias" variable should take when that condition is false. After creating and defining this new variable, we assign the changes back to the ```county_shapefile_biasIndex``` object, which overwrites the previous version of the dataset. 
+
+```{r}
+# Takes the existing dataset assigned to the "county_shapefile_biasIndex" 
+# object, and creates a new variable named "apparent_bias"; this variable 
+# takes  on the value "Apparent Bias" where the "bias_index" variable is 
+# greater than zero and "No Apparent Bias" where it is less than or equal to 
+# zero; these changes are then assigned back to the "county_shapefile_biasIndex" object
+county_shapefile_biasIndex<-
+  county_shapefile_biasIndex %>% 
+            mutate(apparent_bias=ifelse(bias_index>0, 
+                                        "Apparent Bias", 
+                                        "No Apparent Bias"))
+```
+
+```{r, echo=F}
+county_shapefile_biasIndex<-county_shapefile_biasIndex %>% relocate(NAME, geometry, bias_index, apparent_bias)
+```
+
+Let's take a look at what the new variable looks like:
+
+```{r, comment=""}
+# prints contents of "county_shapefile_biasIndex"
+county_shapefile_biasIndex
+```
+
+Now that we have created this new categorical variable, let's go ahead and create a map that displays it on our map of Colorado counties. The code below looks very similar to the code used to map the original "bias_index" variable. The main difference is that instead of setting ```col=bias_index```, we set ```col="apparent_bias"```, since we now want to map the categorical "apparent_bias" variable, rather than the continuous "bias_index" variable. Another difference worth pointing out is that we use a different, bipartite color scheme (since there are now only two categories to map); this color scheme is defined by the vector ```c("orangered1", "white")```, which is passed to the "palette" argument within the **```tm_polygons```** function. Finally, in the previous map, the legend's title was taken from the name of the column that was mapped; here, having this title would be redundant, so we can remove the legend title using ```title=""```. We'll assign this map of the categorical "apparent_bias" variable to a new object named ```traffic_bias_map_categorical```: 
+
+```{r}
+# Creates county-level map of categorical "apparent_bias" variable and 
+# assigns it to an object named "traffic_bias_map_categorical"
+traffic_bias_map_categorical<-
+  tm_shape(county_shapefile_biasIndex)+
+      tm_polygons(col="apparent_bias", 
+                  title="", 
+                  palette=c("orangered1", "white"), 
+                  textNA="No Data")+
+      tm_layout(frame=FALSE, 
+                legend.outside=TRUE)
+```
+
+If we print the contents of ```traffic_bias_map_categorical```, we will see a map that looks something like this:
+
+```{r, fig.asp=0.5}
+# traffic_bias_map_categorical
+traffic_bias_map_categorical
+```
+
+# Refining and formatting maps
+
+In the previous section, we created and refined two maps based on the index of racial bias in traffic stops we created earlier in the tutorial. The first map showed the spatial distribution of the continuous "bias_index" variable with respect to counties in Colorado. 
+
+It looked like this:
+
+```{r, fig.asp=0.5}
+# prints "traffic_bias_map_continuous"
+traffic_bias_map_continuous
+```
+
+The second map created a new categorical variable based on "bias_index", named "apparent_bias", and displayed this categorical variable on a map.
+
+It looked like this:
+
+```{r, fig.asp=0.5}
+# prints "traffic_bias_map_categorical"
+traffic_bias_map_categorical
+```
+
+In this section, we'll continue to refine and customize these maps (for example, by adding titles, map credits, county labels, and labels and titles for the legend). 
+
+## Refine the map of the continuous "bias_index" variable
+
+```{r, echo=F}
+county_shapefile_biasIndex<-county_shapefile_biasIndex %>% relocate(NAME)
+```
+
+Let's start by fine-tuning the map of the continuous "bias_index" variable. As an exercise, read through the code below (without scrolling down to the map), and see if you can decipher what each line is doing, forming a mental picture of the in-progress map as you go. If you're having trouble understanding something, look up the function's documentation, which you can access by typing the name of the function, preceded by a question mark. For example, if you want to access the documentation for the **```tm_polygons()```** function, you can type ```?tm_polygons```, which will bring up the function's documentation (which provides a description of the various arguments to the function), in the "Help" tab on the bottom-right of the R Studio interface. 
+
+```{r, fig.asp=0.5}
+my_colors<-c("white", "peachpuff", "red1", "red4", "navy")
+
+traffic_bias_map_continuous<-
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons(col="bias_index", 
+              palette=my_colors,
+              title="(Black % of Traffic Stops) - (Black % of Population)",
+              textNA="No Data", 
+              breaks=c(-10,-5, 0.01, 2, 4, 5))+
+  tm_layout(frame=FALSE, 
+            legend.outside=TRUE,
+            legend.text.size=0.68,
+            legend.title.size=0.75,
+            title.size=0.75,
+            title.fontface = 2,
+            title="Traffic Stop Racial Bias Index",
+            main.title="Racial Bias in Traffic Stops, by County (Colorado)",
+            main.title.position=0.03,
+            main.title.size=1,
+            attr.outside=TRUE)+
+  tm_credits("Map Author: NAME\nData Sources: 2010 Decennial Census via tidycensus,\nStanford Open Policing Project,\nColorado GeoLibrary ", 
+            position=c(0.02,0.01),
+            size=0.38)
+
+```
+
+Having read through this code, let's see what that the resulting map looks like:
+
+```{r, fig.asp=0.5}
+# prints updated map assigned to "traffic_stop_map_continuous" object
+traffic_bias_map_continuous
+```
+
+Now, let's unpack the various components of the code.
+
+* The code begins by defining the ```my_colors``` vector; this is the same color vector we used in Section 6.3.3, and is reproduced for convenience here.
+* ```traffic_bias_map_continuous<-``` indicates that the map created through the code on the right side of the assignment operator will be assigned to the object named ```traffic_bias_map_continuous```. This overwrites the previous version of the map assigned to this object.
+* The first function that is called is **```tm_shape()```**; we pass the name of the object that contains the data we want to map to this function, which yields ```tm_shape(county_shapefile_biasIndex)```. 
+* After specifying our dataset with **```tm_shape()```**, we call the **```tm_polygons()```** function. The **```tm_polygons()```** function takes several arguments, beginning with ```col="bias_index``` (which specifies the column within ```county_shapefile_biasIndex``` that we want to map), and ```palette=my_colors``` (which specifies that we want to use the colors from the ```my_colors``` vector to represent different interval ranges for the "bias_index" variable). Next, in ```title="(Black % of Traffic Stops) - (Black % of Population)```, we define a subtitle for the legend, so that viewers of the map can discern the intuition behind the bias index that is being mapped. Finally, ```textNA="No Data"``` defines the legend label for "NA" values, and ```breaks=c(-10,-5, 0.01, 2, 4, 5)``` sets the data intervals, which are communicated in the map's legend. Notice that instead of setting one of the break points at 0, this version of the map uses 0.01; that is because the lower bound on data intervals is inclusive, while the upper bound is exclusive (i.e. a hypothetical county with a bias index of exactly 4.00 would be assigned the color that corresponds with the 4.00 to 5.00 legend interval, not the one corresponding to 2.00 to 4.00). As a result, a county with a bias index value of exactly zero would be grouped with counties with a positive value on the index, when it would make more sense to group such a county with counties with negative values on the index. Setting the break point slightly above 0 avoids a scenario where a county with an index value of exactly 0 is grouped together with counties with an index value greater than zero. 
+* The next *tmap* function that is called is the **```tm_layout()```** function, which allows us to specify various parameters that shape the map's layout. Recall from before that ```frame=FALSE``` removes the map's bounding box (which surrounds the area displayed on the map), while ```legend.outside=TRUE``` places the legend outside the map's domain, so that it doesn't overlap with any of the counties that are displayed. Next, ```legend.text.size=0.68``` sets the size for legend text elements (that are not part of the legend's title or subtitle), while ```legend.title.size=0.75``` sets the size of the legend's subtitle, and ```title.size=0.75``` sets the size of the text in the legend's main title. Note that when setting the size of text elements on your map, the best approach to use is usually trial and error; start with an arbitrary size, and then iterate from there. ```title="Traffic Stop Racial Bias Index"``` sets the text for legend's main title, and ```title.fontface = 2``` sets the legend's main title text in boldface. ```main.title="Racial Bias in Traffic Stops, by County (Colorado)"``` sets the map's main title, ```main.title.position=0.03``` sets the position/justification of the title, and ```main.title.size=1``` sets the size of the main title's text. Finally, ```attr.outside=TRUE``` specifies that any map elements other than the legend (such as the map credits) are to be placed outside the map boundary. 
+* The **```tm_credits()```** function is a *tmap* function which allows us to add a credits section to the map, to convey information about things such as the name of the map author and the sources of the data used to create the map. In the code above, the first argument to the **```tm_credits()```** function is simply the text we would like to include in the credits; new lines are indicated by text that reads ```\n```. Second, ```position=c(0.02,0.01)``` specifies the position of the credits section with respect to the map (the first element of the vector, 0.02, can be thought of as the x-coordinate, while the second element, 0.01, can be thought of as a y-coordinate); these coordinates place the credits below the map on the left-hand side. Finally, ```size=0.38``` specifies the size of the text used in the credits section. 
+
+Notice that our map currently does not have labels for county names; these can easily be added using the **```tm_text()```** function that is part of the *tmap* package. Instead of rewriting all of the code from above, we can simply append the **```tm_text()```** function and its arguments to the map object we already created above (```traffic_bias_map_continuous```). The code below takes the existing ```traffic_bias_map_continous``` object, which we updated above, and adds a line of code that reads ```tm_text("NAME", size=0.30, fontface=2)```. This labels the map's polygons using information from the underlying dataset's "NAME" field (which contains county names), using a text size of 0.3; the argument ```fontface=2``` specifies that the county name labels are to be printed in boldface. No other changes  or additions are made to ```traffic_bias_map_continuous```. The version of the map that is labeled is assigned to a new object, named ```traffic_bias_map_continuous_labeled```. 
+
+
+```{r}
+# Adds labels to "traffic_bias_map_continuous" and assigns new labeled map
+# to new object named "traffic_bias_map_continuous_labeled"
+traffic_bias_map_continuous_labeled<-
+  traffic_bias_map_continuous+
+    tm_text("NAME", size=0.30, fontface=2)
+```
+
+When we open ```traffic_bias_map_continuous_labeled```, we can see the map with labels:
+
+```{r, fig.asp=0.5}
+# prints contents of "traffic_bias_map_continuous_labeled"
+traffic_bias_map_continuous_labeled
+```
+
+## Refine the categorical map
+
+The code below refines the categorical map we created in Section 6.4. The map is largely the same as the one created in that section, but adds and customizes the appearance of the map's title using arguments to the  **```tm_layout()```** function that we have already discussed in Section 7.1, and also adds a map credits section that is identical to the one we used in 7.1. The map is assigned to the ```traffic_bias_map_categorical``` object, which overwrites the map we previously assigned to this object in Section 6.4. 
+
+```{r}
+# Creates a map of the categorical "apparent_bias" variable, with counties 
+# where there is apparent bias in traffic police stops displayed in "orangered1", 
+# and counties without apparent bias displayed in "white"
+traffic_bias_map_categorical<-
+tm_shape(county_shapefile_biasIndex)+
+  tm_polygons(col="apparent_bias", 
+              title="", 
+              palette=c("orangered1", "white"), 
+              textNA="No Data")+
+    tm_layout(frame=FALSE, 
+              legend.outside=TRUE,
+              main.title="Racial Bias in Traffic Stops, by County in Colorado\n(Based on Whether % of Black Motorists Stopped by Police > County's Adult Black Population %)",
+              main.title.position=0.03,
+              main.title.size=0.75,
+              attr.outside=TRUE)+
+  tm_credits("Map Author: NAME\nData Sources: 2010 Decennial Census via tidycensus,\nStanford Open Policing Project,\nColorado GeoLibrary ",
+              position=c(0.02,0.01), # Specifies location of map credits
+             size=0.38)+
+  tm_text("NAME", size=0.30, fontface=2)
+```
+
+We can print the contents of ```traffic_bias_map_categorical``` to view the updated map in the "Plots" window:
+
+```{r, fig.asp=0.5}
+# prints contents of "traffic_bias_map_categorical"
+traffic_bias_map_categorical
+```
+
+## Create a dynamic map of the bias index
+
+Recall from Section 6.1 that it is possible to render both static maps and interactive maps using the *tmap* package. Thus far, our focus has been on creating static maps to display county-level variation in the "bias_index" variable (or the derivative categorical variable, "apparent_bias"). It's worth briefly reminding ourselves that we can easily turn these static maps into dynamic maps by changing the *tmap* mode to "view." For example, let's say we want to display an interactive version of the map assigned to ```traffic_bias_map_continuous```: 
+
+```{r}
+# Changes tmap mode to "view"
+tmap_mode("view")
+```
+
+```{r}
+# Prints "traffic_bias_map_continuous" in View mode
+traffic_bias_map_continuous
+```
+
+```{r, echo=FALSE, message=FALSE}
+tmap_mode("plot")
+```
+
+Before proceeding with the lesson, please toggle back to "plot" mode. 
+
+# Exporting maps
+
+Once you have made a map and are satisfied with its appearance, it is straightforward to export the map from R Studio to a local directory on your computer, where you can then embed your map in papers, projects, presentations, or websites. 
+
+The easiest way to export maps is by using the **```tmap_save()```** function. This function allows users to specify the desired dimensions and resolution of the exported map, among other things. For our purposes, we'll simply export the map assigned to ```traffic_bias_map_continuous_labeled``` using the default settings. Below, the first argument is the name of the map object we'd like to export; here, that is ```traffic_bias_map_continuous_labeled```. The second argument is the desired file name and extension; it is possible to pick any number of extensions, such as PDF, jpeg, and png. Here, we'll export the map as a .png file. 
+
+```{r}
+# Exports map assigned to "traffic_bias_map_continuous_labeled" object to 
+# working directory; the exported map is saved as 
+# "traffic_bias_map_continuous_labeled.png"
+tmap_save(traffic_bias_map_continuous_labeled, 
+          "traffic_bias_map_continuous_labeled.png")
+```
+
+Because we didn't specify the path to a directory in the second argument, the map will be exported to our working directory.
+
+Note that if you'd like to export a dynamic/interactive map, you can use the same code as above; the only difference is that you would use an "html" extension. The interactive map would then be exported to your working directory as an html file, which can then easily be embedded on a website. 
+
+# Summary scripts
+
+This section summarizes the code we have written over the course of the tutorial to map county-level variation in possible anti-Black bias in Colorado's 2010 traffic patrol stops. Section 9.1 provides the script to clean and process the original dataset published by the Stanford Open Policing Project, and get that data into a form that is suitable for mapping. Section Section 9.2 provides the script to create a map of the continuous "bias_index" variable, with counties labeled. Section 9.3 provides the script to create a map of a categorical variable that indicates whether a county's value for "bias_index" is greater than zero, or less than/equal to zero, and then make a map of this categorical variable (with counties labeled). 
+
+## Summary script to prepare, clean, and process data for mapping
+
+```{r, eval=F}
+# Read in Stanford police data for Colorado and assign to object 
+# named "co_traffic_stops" 
+co_traffic_stops<-read_csv("co_statewide_2020_04_01.csv")
+
+# Create "Year" field based on existing "date" field
+co_traffic_stops<-co_traffic_stops %>% 
+                    mutate(Year=substr(co_traffic_stops$date, 1,4))
+
+# Filter 2010 observations and assign to a new object named 
+# "co_traffic_stops_2010"
+co_traffic_stops_2010<-co_traffic_stops %>% filter(Year==2010)
+
+# Compute county-level count of traffic stops by race and assign to object 
+# named "co_county_summary"
+co_county_summary<-co_traffic_stops_2010 %>% 
+                    group_by(county_name) %>% 
+                    count(subject_race) 
+
+# Reshape the data so that the racial categories are transposed
+# from rows into columns and assign the result to an object named
+# "co_county_summary_wide"
+co_county_summary_wide<-co_county_summary %>% 
+                        pivot_wider(names_from=subject_race, values_from=n)
+
+
+# Creates a new column named "total_stops" in "co_county_summary_wide" that
+# contains information on the total number of stops for each county 
+# (across all racial categories)
+co_county_summary_wide<-co_county_summary_wide %>% 
+                        rowwise() %>% 
+                        mutate(total_stops=
+                                 sum(c_across(where(is.integer)), na.rm=TRUE))
+
+# Selects "county_name", "black", and "total_stops" variables from
+# "co_county_summary_wide"; then renames the "black" variable to 
+# "black_stops" for clarity; then removes counties that are named "NA" 
+# due to an error in the dataset
+co_county_black_stops<-co_county_summary_wide %>%
+                        select(county_name, black, total_stops) %>% 
+                        rename(black_stops=black) %>% 
+                        filter(county_name!="NA")
+
+# Read in the pre-prepared demographic data from the 2010 decennial 
+# census and assign to an object named "co_counties_census_2010"
+co_counties_census_2010<-read_csv("co_county_decennial_census.csv")
+
+# Join "co_counties_census_2010" to "co_county_black_stops" and assign the result
+# to an object named "co_counties_census_trafficstops"
+co_counties_census_trafficstops<-full_join(co_county_black_stops, 
+                                           co_counties_census_2010,
+                                           by=c("county_name"="County"))
+
+# Use the information in "co_counties_census_trafficstops" to define new 
+# variables that will be used to compute the racial bias index: 
+# "black_stop_pct" (the black percentage of overall traffic stops within
+# a county) and "black_pop_pct" (the black percentage of the county's 
+#over-17 population)
+co_counties_census_trafficstops<-
+  co_counties_census_trafficstops %>% 
+    mutate(black_stop_pct=((black_stops/total_stops)*100),
+          black_pop_pct=((total_black_pop_over17/total_pop_over17)*100))
+
+# Calculate the bias index and include it as a new variable in 
+# "co_counties_census_trafficstops"
+co_counties_census_trafficstops<-co_counties_census_trafficstops %>% 
+                                  mutate(excess_stops_index=
+                                           black_stop_pct-black_pop_pct)
+
+# Reads in Colorado county shapefile and assigns the shapefile to a new object 
+# named "co_counties_shapefile"
+co_counties_shapefile<-st_read("tl_2019_08_county.shp")
+
+# Join "co_counties_census_trafficstops" to "co_counties_shapefile" using 
+# "GEOID" as the join field; assign the result to a new object named #
+# "county_shapefile_biasIndex"
+county_shapefile_biasIndex<-full_join(co_counties_shapefile, co_counties_census_trafficstops, by="GEOID")
+```
+
+## Summary script for map of continuous "bias_index" variable
+
+```{r}
+# creates color vector
+my_colors<-c("white", "peachpuff", "red1", "red4", "navy") # defines color palette
+
+# make a map of the continuous "bias_index" variable
+traffic_bias_map_continuous_labeled<-  
+  tm_shape(county_shapefile_biasIndex)+ # specifies name of object containing data to be mapped
+  tm_polygons(col="bias_index", # specifies variable to be mapped
+              palette=my_colors, # specifies color palette to be used in map
+              title="(Black % of Traffic Stops) - (Black % of Population)", # creates legend subtitle
+              textNA="No Data", # specifies label for NA data values
+              n=5, # specifies number of data partitions
+              breaks=c(-10,-5, 0.01, 2, 4, 5))+ # specifies legend breaks
+  tm_layout(frame=FALSE, # removes bounding box
+            legend.outside=TRUE, # places legend outside map domain
+            legend.text.size=0.68, # sets size of non-title legend text
+            legend.title.size=0.75,  # sets text size for legend subtitle
+            title="Traffic Stop Racial Bias Index", # sets legend main title
+            title.size=0.75, # sets text size for legend main title
+            title.fontface = 2, # makes legend title text bold
+            main.title="Racial Bias in Traffic Stops, by County (Colorado)", # sets main title for map
+            main.title.position=0.03, # sets position of main title
+            main.title.size=1, # sets text size for map's main title
+            attr.outside=TRUE)+ # places credits outside map domain
+  tm_credits("Map Author: NAME\nData Sources: 2010 Decennial Census via tidycensus,\nStanford Open Policing Project,\nColorado GeoLibrary ", # sets credits text
+                    position=c(0.02,0.01), # sets credits position
+                    size=0.38)+ # sets credits size
+  tm_text("NAME", # specifies the name of the variable in spatial dataset containing desired polygon labels
+          size=0.30, # sets size of labels
+          fontface=2) # makes polygon labels bold
+```
+
+```{r, fig.asp=0.5}
+# Prints map
+traffic_bias_map_continuous_labeled
+```
+
+## Summary script for categorical map
+
+```{r}
+# Makes categorical variable based on continuous "bias_index" variable; 
+# this categorical variable is named "apparent_bias", and is coded as 
+# "Apparent Bias" if "bias_index">0 and coded as "No Apparent Bias" if "bias_index"<=0
+county_shapefile_biasIndex<-
+  county_shapefile_biasIndex %>% 
+            mutate(apparent_bias=ifelse(bias_index>0, "Apparent Bias", 
+                                        "No Apparent Bias"))
+
+# Makes categorical map based on "apparent_bias" variable and assigns this 
+# map to object named "traffic_bias_map_categorical"
+traffic_bias_map_categorical<-
+  tm_shape(county_shapefile_biasIndex)+ # specifies name of spatial object containing data to be mapped
+    tm_polygons(col="apparent_bias", # specifies name of variable to be mapped
+                title="", # eliminates legend title
+                palette=c("orangered1", "white"), # sets color scheme for categories
+                textNA="No Data")+ # specifies label for NA data values
+    tm_layout(frame=FALSE, # removes map bounding box
+              legend.outside=TRUE, # places legend outside map domain
+              main.title="Racial Bias in Traffic Stops, by County in Colorado\n(Based on Whether % of Black Motorists Stopped by Police > County's Adult Black Population %)", # sets main title for map
+              main.title.position=0.03, # sets position for map's main title
+              main.title.size=0.75, # sets size for map's main title
+              attr.outside=TRUE)+ # sets map credits outside map's domain
+  tm_credits("Map Author: NAME\nData Sources: 2010 Decennial Census via tidycensus,\nStanford Open Policing Project,\nColorado GeoLibrary ",  # sets text for map credits
+              position=c(0.02,0.01), # Specifies location of map credits
+             size=0.38)+ # specifies size of map credit text
+  tm_text("NAME", # specifies the name of the variable in spatial dataset containing desired polygon labels
+          size=0.30, # sets size of labels
+          fontface=2) # makes polygon labels bold
+```
+
+```{r, fig.asp=0.5}
+# prints categorical map
+traffic_bias_map_categorical
+```
+
+# Reflections and Discussion Questions
+
+Now that we've created our maps, it's worthwhile to reflect on the process and its outcomes. Consider the following:
+
+* How might you change the maps we made? For example, would you change the color schemes, number of intervals, title, or any other features of their appearance? If so, why? See if you can change the code we developed to implement those changes.
+* Reflect on the process of “cleaning” and reorganizing the original Stanford Policing Project dataset (this process is summarized in Section 9.1). Why were these steps necessary in order to generate our maps? What information was lost in the course of making these data transformations? What research questions might the original dataset be able to answer, that the “cleaned” dataset that results from these transformations could not answer? 
+* What do you think are the possible shortcomings of the "bias_index" variable we created? Can you think of an alternative measure of racial bias in traffic stops that addresses these shortcomings? Could you create it with the data we already have? If not, what data would you need to collect?
+* What spatial patterns (if any) do you notice in how the "bias_index" is distributed across counties? Are there regions of the state where several counties with high values for the bias index are clustered? What might explain these patterns?
+* What implications might these maps have for public policy? 
+
+# Conclusion and Further Reading
+
+If you're interested in exploring projects resources that lie at the intersection of GIS, Black history, and the study of structural racism, ESRI's [Racial Equity Hub](https://gis-for-racialequity.hub.arcgis.com/) is a good place to start. 
+
+If you're interested in exploring a specific example of a large-scale interdisciplinary project on systemic racism that incorporates spatial analysis, check out the [Mapping Prejudice](https://mappingprejudice.umn.edu/) project from the University of Minnesota (Ehrman-Solberg et al, 2020). The data for that project is available at the [University of Minnesota's institutional repository](https://conservancy.umn.edu/handle/11299/217209).
+
+If you’d like to explore publications that use the Open Policing Data, including the initial paper by Pierson et al (2020), see the Stanford Open Policing Project’s [publications page](https://openpolicing.stanford.edu/publications/). The Stanford project site also has a useful [tutorial](https://openpolicing.stanford.edu/tutorials/) that introduces the data and provides some guidance in analyzing it. The tutorial includes a discussion of more advanced ways to measure racial bias in traffic stops than the one we used here, and a useful way to extend your knowledge might be to think about how to create and map those more advanced measures.
+
+If you would like to further develop your spatial visualization and mapping skills, an excellent place to start is with the free and open-source book by Lovelace, Nowosad, and Muenchow (2021), entitled [Geocomputation with R](https://geocompr.robinlovelace.net/index.html). The book is more than an introduction to making maps; it’s a comprehensive guide to spatial analysis and Geographic Information Systems using the R programming language.
+
+# References
+
+Ehrman-Solberg, K. P. Petersen, M. Mills, K. Delegard, R. Mattke. 2020. Racial Covenants in Hennepin County. *University of Minnesota Data Repository.* [https://doi.org/10.13020/a88t-yb14](https://doi.org/10.13020/a88t-yb14)
+
+Esri. n.d. GIS for Racial Equity: Racial Equity Hub. Accessed February 15, 2022. [https://gis-for-racialequity.hub.arcgis.com/](https://gis-for-racialequity.hub.arcgis.com/)
+
+Esri. n.d. Data Classification Methods. Accessed February 14, 2021. [https://pro.arcgis.com/en/pro-app/2.7/help/mapping/layer-properties/data-classification-methods.htm](https://pro.arcgis.com/en/pro-app/2.7/help/mapping/layer-properties/data-classification-methods.htm)
+
+Frazier, M. “R Color Cheatsheet.” Accessed February 10, 2022. [https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf](https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf).
+
+Lovelace, R, J. Nowosad, and J. Muenchow. 2021. *Geocomputation With R*. [https://geocompr.robinlovelace.net/](https://geocompr.robinlovelace.net/).
+
+Pebesma, E. 2018. Simple Features for R: Standardized Support for Spatial Vector Data. *The R Journal 10*(1): 439-446. [https://doi.org/10.32614/RJ-2018-009](https://doi.org/10.32614/RJ-2018-009).
+
+Pierson, E., C. Simoiu, J. Overgoor, S. Corbett-Davies, D.Jenson, A. Shoemaker, V. Ramachandran, P. Barghouty, C. Phillips, R. Shroff, and S. Goel. 2020. A large-scale analysis of racial disparities in police stops across the United States. *Nature Human Behaviour 4*: 736-745. 
+
+R For Social Scientists: Setup. 2018-2021. Data Carpentry. [https://datacarpentry.org/r-socialsci/setup.html](https://datacarpentry.org/r-socialsci/setup.html).
+
+Stanford Open Policing Project. 2019. Open Policing Project Tutorial. Accessed February 15, 2022. [https://openpolicing.stanford.edu/tutorials/](https://openpolicing.stanford.edu/tutorials/). 
+
+Stelter, M., I. Essien, C. Sander, and J. Degner. 2021. Racial bias in police traffic stops: White residents' county-level prejudice and Sterotypes are related to disproportionate stopping of Black drivers." *PsyArXiv Preprints.* [https://psyarxiv.com/djp8g/](https://psyarxiv.com/djp8g/). 
+
+Tennekes, M. 2018. tmap: Thematic Maps in R. *Journal of Statistical Software 84*(6): 1-39. [https://doi.org/10.18637/jss.v084.i06](https://doi.org/10.18637/jss.v084.i06).
+
+U.S. Census Bureau. 2019. Colorado Counties Shapefile. [https://geo.colorado.edu/catalog/47540-5e712aeda3d91e0009f59fc7](https://geo.colorado.edu/catalog/47540-5e712aeda3d91e0009f59fc7). 
+
+Walker, K. and M. Herman. 2021. "tidycensus: Load US Census Boundary and Attribute Data as `tidyverse` and `sf`-Read Data Frames." R Package version 1.1. [https://CRAN.R-project.org/package=tidycensus](https://CRAN.R-project.org/package=tidycensus)
+
+Wickham, H., M. Averick, J. Bryan, W. Chang, L.D. McGowan, R. Francois, G. Grolemund et al. 2019. "Welcome to the tidycerse. *Journal of Open Source Software 4*(43): 1686. [https://doi.org/10.21105/joss.01686](https://doi.org/10.21105/joss.01686). 
+

@@ -1,0 +1,88 @@
+--- 
+title: "Exploring the Geography of Systemic Racism with Spatial Data Science"
+author: "Aditya Ranganath"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+---
+
+# Introduction
+
+In this workshop, we will introduce you to spatial data analysis and visualization using R Studio. We will do so through a substantive exploration of systemic racism in traffic police stops. In particular, we will take a large (over 3,000,000 observations) dataset of Colorado traffic stops released by the [Stanford Open Policing Project](https://openpolicing.stanford.edu/), and develop a simple county-level measure of the magnitude of anti-Black racial bias in traffic police stops during the year 2010. We will then display county-level variation in this bias index on a map of Colorado counties.
+
+## Workshop Objectives
+
+The workshop has several learning objectives. Among other things, you will learn how to:
+
+* Read in datasets (both tabular and spatial) into R Studio
+* Clean and process data in R Studio using *tidyverse* functions (i.e. subset data, reshape data, summarize datasets, join different datasets together, and define new variables)
+* Make static maps and interactive web maps in R Studio using the *tmap* package
+* Export your maps from R Studio so they can be embedded in your reports and websites
+
+Most broadly, and most importantly, you will gain an appreciation for how to use real-world social scientific geospatial data to better understand important social problems, and use this understanding to reflect on possible ways to address these problems. 
+
+## Data
+
+The workshop makes use of the following three datasets:
+
+* Colorado State Patrol traffic stops data, available through the Stanford Open Policing Project (mentioned above). The data was collected by Pierson et al. (2020). The data is available at the Project's [data page](https://openpolicing.stanford.edu/data/), under the "CO" heading; if you're downloading the data directly from the website, be sure to use the "State Patrol" data.
+* A dataset of county-level demographic data (based on the 2010 decennial census), which your instructors generated prior to the workshop. If you're interested, please consult the Appendix to this tutorial to see how this demographic data was extracted from the census. 
+* A [spatial dataset of Colorado counties](https://geo.colorado.edu/catalog/47540-5e712aeda3d91e0009f59fc7), available from the US census via the [Colorado GeoLibrary](https://geo.colorado.edu/), a curated online archive of Colorado-related spatial data. Note that this spatial dataset is stored as a shapefile, which is a common file format used to store spatial data.
+
+For convenience, all of this data can be downloaded from this [Dropbox Folder](https://www.dropbox.com/sh/sd7wwi5b0r9s9mn/AABscRHrEvXRoX26e_yqEiTFa?dl=0). 
+
+## Install R and R Studio 
+
+In order to follow along with the lesson, you must install both R and R Studio. Please see the [installation instructions from this Data Carpentry lesson](https://datacarpentry.org/r-socialsci/setup.html) for additional guidance regarding R and R Studio installation. 
+
+## The R Studio Interface
+
+If you haven’t used R Studio before, you can take a quick tour of the R Studio interface and get oriented by consulting this Data Carpentry tutorial titled [Introduction to R and R Studio](https://datacarpentry.org/r-intro-geospatial/01-rstudio-intro/index.html). See, in particular the section of the tutorial titled “Introduction to R Studio.”
+
+## Install and load packages
+
+In order to carry out the analysis presented in the workshop, you must install the *tidyverse* (a suite of data science-related R packages), *sf* (a package used to load and process spatial datasets in R), and *tmap* (a package that facilitates mapping and spatial data visualization in R). If you haven't already installed one or more of these packages, you can do so by placing the package name in quotes as an argument to the **```install.packages()```**  function. 
+
+For example, if you wanted to install *tmap*, you would print the following in your R Studio console, or run it from a script (which you can open by clicking **File** in your R Studio menu bar, selecting **New File**, and then clicking **R Script**):
+
+```{eval=FALSE}
+install.packages("tmap")
+```
+
+After installing the required package, you must load the packages into memory, which you can do with the following:
+
+```{r, message=F, results=F, warning=F}
+# Loads libraries
+library(tidyverse)
+library(tmap)
+library(sf)
+```
+
+Note that you only need to install packages once on a given computer, and (usually) do not need to reinstall packages after quitting an R session and opening up a new one. However, you *do* need to reload any necessary libraries each time you open a new R session. 
+
+If you would like additional information about how R packages work, please see the **Installing Packages** section in this [Data Carpentry tutorial](https://datacarpentry.org/r-intro-geospatial/01-rstudio-intro/index.html).
+
+## Set working directory
+
+Before we can bring our data into R Studio and begin the tutorial, we have to specify the location of the relevant data on our computer. This step is known as setting one's working directory. Before setting the working directory, make sure that you've downloaded the data provided at the [folder](https://www.dropbox.com/sh/sd7wwi5b0r9s9mn/AABscRHrEvXRoX26e_yqEiTFa?dl=0) mentioned above to a directory on your computer. 
+
+If you're unfamiliar with the concept of file paths, the easiest way to set your working directory is through the R Studio menu. To do so, follow these steps: 
+
++ First, click on the **Session** menu on the R Studio menu bar at the top of your screen, and then scroll down to the **Set Working Directory** button in the menu that opens up. 
++ When you hover over the **Set Working Directory** button, a subsidiary menu that contains a button that says **Choose Directory** will open; click this **Choose Directory** button. 
++ In the dialog box that opens up, navigate to the directory that contains the downloaded workshop data, select it, and click "Open". At this point, your working directory should be set!
+
+*Alternatively*, if you are familiar with the concept of file paths, and know the file path to the folder containing the downloaded datasets, you can set the working directly using the **```setwd()```** function, where the argument to the function is the relevant file path enclosed in quotation marks. For example:
+
+```{r, eval=FALSE}
+# Setting the working directory programmatically
+setwd("<FILE PATH TO DATA DIRECTORY HERE>")
+```
+
+At this point, we're ready to begin the main part of our lesson!
+
+
+
+
+
+
+

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>4 Transforming Data | Exploring the Geography of Systemic Racism with Spatial Data Science</title>
+  <meta name="description" content="4 Transforming Data | Exploring the Geography of Systemic Racism with Spatial Data Science" />
+  <meta name="generator" content="bookdown 0.24 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="4 Transforming Data | Exploring the Geography of Systemic Racism with Spatial Data Science" />
+  <meta property="og:type" content="book" />
+  
+  
+  
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="4 Transforming Data | Exploring the Geography of Systemic Racism with Spatial Data Science" />
+  
+  
+  
+
+<meta name="author" content="Aditya Ranganath" />
+
+
+<meta name="date" content="2022-06-26" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="cleaning-and-filtering-data.html"/>
+<link rel="next" href="defining-an-index-of-racial-bias-in-traffic-stops.html"/>
+<script src="libs/header-attrs-2.10/header-attrs.js"></script>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.0.1/anchor-sections.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.0.1/anchor-sections.js"></script>
+<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<link href="libs/leaflet-1.3.1/leaflet.css" rel="stylesheet" />
+<script src="libs/leaflet-1.3.1/leaflet.js"></script>
+<link href="libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet" />
+<script src="libs/proj4-2.6.2/proj4.min.js"></script>
+<script src="libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+<link href="libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet" />
+<script src="libs/leaflet-binding-2.0.4.1/leaflet.js"></script>
+<script src="libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
+<script src="libs/leaflet-providers-plugin-2.0.4.1/leaflet-providers-plugin.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">The Geography of Systemic Racism</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Introduction</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#workshop-objectives"><i class="fa fa-check"></i><b>1.1</b> Workshop Objectives</a></li>
+<li class="chapter" data-level="1.2" data-path="index.html"><a href="index.html#data"><i class="fa fa-check"></i><b>1.2</b> Data</a></li>
+<li class="chapter" data-level="1.3" data-path="index.html"><a href="index.html#install-r-and-r-studio"><i class="fa fa-check"></i><b>1.3</b> Install R and R Studio</a></li>
+<li class="chapter" data-level="1.4" data-path="index.html"><a href="index.html#the-r-studio-interface"><i class="fa fa-check"></i><b>1.4</b> The R Studio Interface</a></li>
+<li class="chapter" data-level="1.5" data-path="index.html"><a href="index.html#install-and-load-packages"><i class="fa fa-check"></i><b>1.5</b> Install and load packages</a></li>
+<li class="chapter" data-level="1.6" data-path="index.html"><a href="index.html#set-working-directory"><i class="fa fa-check"></i><b>1.6</b> Set working directory</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="loading-data.html"><a href="loading-data.html"><i class="fa fa-check"></i><b>2</b> Loading data</a></li>
+<li class="chapter" data-level="3" data-path="cleaning-and-filtering-data.html"><a href="cleaning-and-filtering-data.html"><i class="fa fa-check"></i><b>3</b> Cleaning and filtering data</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="cleaning-and-filtering-data.html"><a href="cleaning-and-filtering-data.html#create-a-year-field"><i class="fa fa-check"></i><b>3.1</b> Create a “Year” field</a></li>
+<li class="chapter" data-level="3.2" data-path="cleaning-and-filtering-data.html"><a href="cleaning-and-filtering-data.html#filter-by-year"><i class="fa fa-check"></i><b>3.2</b> Filter by year</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="transforming-data.html"><a href="transforming-data.html"><i class="fa fa-check"></i><b>4</b> Transforming Data</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="transforming-data.html"><a href="transforming-data.html#tabulate-county-level-count-of-traffic-stops-by-race"><i class="fa fa-check"></i><b>4.1</b> Tabulate county-level count of traffic stops by race</a></li>
+<li class="chapter" data-level="4.2" data-path="transforming-data.html"><a href="transforming-data.html#reshape-the-data"><i class="fa fa-check"></i><b>4.2</b> Reshape the data</a></li>
+<li class="chapter" data-level="4.3" data-path="transforming-data.html"><a href="transforming-data.html#calculate-total-stops-for-each-county-in-co_county_summary_wide"><i class="fa fa-check"></i><b>4.3</b> Calculate total stops for each county in <code>co_county_summary_wide</code></a></li>
+<li class="chapter" data-level="4.4" data-path="transforming-data.html"><a href="transforming-data.html#clean-co_county_summary_wide-and-assign-to-new-object"><i class="fa fa-check"></i><b>4.4</b> Clean <code>co_county_summary_wide</code> and assign to new object</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html"><i class="fa fa-check"></i><b>5</b> Defining an index of racial bias in traffic stops</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#read-in-2010-census-data"><i class="fa fa-check"></i><b>5.1</b> Read in 2010 census data</a></li>
+<li class="chapter" data-level="5.2" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#join-census-data-to-co_county_black_stops"><i class="fa fa-check"></i><b>5.2</b> Join census data to <code>co_county_black_stops</code></a></li>
+<li class="chapter" data-level="5.3" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#define-the-variables-that-will-be-used-in-the-bias-index"><i class="fa fa-check"></i><b>5.3</b> Define the variables that will be used in the bias index</a></li>
+<li class="chapter" data-level="5.4" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#calculate-the-bias-index"><i class="fa fa-check"></i><b>5.4</b> Calculate the bias index</a></li>
+<li class="chapter" data-level="5.5" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#compute-summary-statistics-for-the-bias-index"><i class="fa fa-check"></i><b>5.5</b> Compute summary statistics for the bias index</a></li>
+<li class="chapter" data-level="5.6" data-path="defining-an-index-of-racial-bias-in-traffic-stops.html"><a href="defining-an-index-of-racial-bias-in-traffic-stops.html#visualize-county-level-variation-in-the-bias-index-using-ggplot"><i class="fa fa-check"></i><b>5.6</b> Visualize county-level variation in the bias index using <code>ggplot</code></a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html"><i class="fa fa-check"></i><b>6</b> Mapping the bias index</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#read-in-and-view-the-shapefile-of-co-counties"><i class="fa fa-check"></i><b>6.1</b> Read in and view the shapefile of CO counties</a></li>
+<li class="chapter" data-level="6.2" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#join-co_counties_census_trafficstops-to-the-shapefile-of-colorado-counties"><i class="fa fa-check"></i><b>6.2</b> Join <code>co_counties_census_trafficstops</code> to the shapefile of Colorado counties</a></li>
+<li class="chapter" data-level="6.3" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#display-the-bias-index-on-a-map-of-colorado-counties"><i class="fa fa-check"></i><b>6.3</b> Display the bias index on a map of Colorado counties</a>
+<ul>
+<li class="chapter" data-level="6.3.1" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#make-a-rough-draft-of-a-map"><i class="fa fa-check"></i><b>6.3.1</b> Make a rough draft of a map</a></li>
+<li class="chapter" data-level="6.3.2" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#make-a-map-with-custom-breaks"><i class="fa fa-check"></i><b>6.3.2</b> Make a map with custom breaks</a></li>
+<li class="chapter" data-level="6.3.3" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#make-a-map-with-custom-colors"><i class="fa fa-check"></i><b>6.3.3</b> Make a map with custom colors</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="mapping-the-bias-index.html"><a href="mapping-the-bias-index.html#make-a-categorical-map"><i class="fa fa-check"></i><b>6.4</b> Make a categorical map</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="refining-and-formatting-maps.html"><a href="refining-and-formatting-maps.html"><i class="fa fa-check"></i><b>7</b> Refining and formatting maps</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="refining-and-formatting-maps.html"><a href="refining-and-formatting-maps.html#refine-the-map-of-the-continuous-bias_index-variable"><i class="fa fa-check"></i><b>7.1</b> Refine the map of the continuous “bias_index” variable</a></li>
+<li class="chapter" data-level="7.2" data-path="refining-and-formatting-maps.html"><a href="refining-and-formatting-maps.html#refine-the-categorical-map"><i class="fa fa-check"></i><b>7.2</b> Refine the categorical map</a></li>
+<li class="chapter" data-level="7.3" data-path="refining-and-formatting-maps.html"><a href="refining-and-formatting-maps.html#create-a-dynamic-map-of-the-bias-index"><i class="fa fa-check"></i><b>7.3</b> Create a dynamic map of the bias index</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="exporting-maps.html"><a href="exporting-maps.html"><i class="fa fa-check"></i><b>8</b> Exporting maps</a></li>
+<li class="chapter" data-level="9" data-path="summary-scripts.html"><a href="summary-scripts.html"><i class="fa fa-check"></i><b>9</b> Summary scripts</a>
+<ul>
+<li class="chapter" data-level="9.1" data-path="summary-scripts.html"><a href="summary-scripts.html#summary-script-to-prepare-clean-and-process-data-for-mapping"><i class="fa fa-check"></i><b>9.1</b> Summary script to prepare, clean, and process data for mapping</a></li>
+<li class="chapter" data-level="9.2" data-path="summary-scripts.html"><a href="summary-scripts.html#summary-script-for-map-of-continuous-bias_index-variable"><i class="fa fa-check"></i><b>9.2</b> Summary script for map of continuous “bias_index” variable</a></li>
+<li class="chapter" data-level="9.3" data-path="summary-scripts.html"><a href="summary-scripts.html#summary-script-for-categorical-map"><i class="fa fa-check"></i><b>9.3</b> Summary script for categorical map</a></li>
+</ul></li>
+<li class="chapter" data-level="10" data-path="reflections-and-discussion-questions.html"><a href="reflections-and-discussion-questions.html"><i class="fa fa-check"></i><b>10</b> Reflections and Discussion Questions</a></li>
+<li class="chapter" data-level="11" data-path="conclusion-and-further-reading.html"><a href="conclusion-and-further-reading.html"><i class="fa fa-check"></i><b>11</b> Conclusion and Further Reading</a></li>
+<li class="chapter" data-level="12" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i><b>12</b> References</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html"><i class="fa fa-check"></i><b>A</b> Using <em>tidycensus</em> to extract relevant census data</a>
+<ul>
+<li class="chapter" data-level="A.1" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html#define-your-variables"><i class="fa fa-check"></i><b>A.1</b> Define your variables</a></li>
+<li class="chapter" data-level="A.2" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html#extract-the-variables-using-tidycensus"><i class="fa fa-check"></i><b>A.2</b> Extract the variables using tidycensus</a></li>
+<li class="chapter" data-level="A.3" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html#clean-the-tidycensus-dataset"><i class="fa fa-check"></i><b>A.3</b> Clean the <em>tidycensus</em> dataset</a></li>
+<li class="chapter" data-level="A.4" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html#define-new-variables"><i class="fa fa-check"></i><b>A.4</b> Define new variables</a></li>
+<li class="chapter" data-level="A.5" data-path="using-tidycensus-to-extract-relevant-census-data.html"><a href="using-tidycensus-to-extract-relevant-census-data.html#finalize-and-export-the-dataset"><i class="fa fa-check"></i><b>A.5</b> Finalize and export the dataset</a></li>
+</ul></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Exploring the Geography of Systemic Racism with Spatial Data Science</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="transforming-data" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Transforming Data</h1>
+<p>Now that we have created a new dataset that contains information on traffic stops from our year of interest (2010), let’s do a bit of work with the data so that we can find out the total number of traffic stops within each county, and the number of stops within each county that involved a Black motorist.</p>
+<div id="tabulate-county-level-count-of-traffic-stops-by-race" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Tabulate county-level count of traffic stops by race</h2>
+<p>First, let’s find out the racial breakdown of stops for each county, using the data in the “subject_race” field of <code>co_traffic_stops_2010</code>.</p>
+<p>Below, we take the <code>co_traffic_stops_2010</code> object, declare “county_name” as a grouping variable using <code>group_by(county_name)</code>, and then count up the number of stops associated with each racial category within each county using <code>count(subject_race)</code>. The dataset thats results from these operations is assigned to a new object named <code>co_county_summary</code>:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="transforming-data.html#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute county-level count of traffic stops by race</span></span>
+<span id="cb15-2"><a href="transforming-data.html#cb15-2" aria-hidden="true" tabindex="-1"></a>co_county_summary<span class="ot">&lt;-</span>co_traffic_stops_2010 <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="transforming-data.html#cb15-3" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">group_by</span>(county_name) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-4"><a href="transforming-data.html#cb15-4" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">count</span>(subject_race) </span></code></pre></div>
+<p>Let’s print the first few rows from the dataset and observe its structure:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="transforming-data.html#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints contents of &quot;co_county_summary&quot;</span></span>
+<span id="cb16-2"><a href="transforming-data.html#cb16-2" aria-hidden="true" tabindex="-1"></a>co_county_summary</span></code></pre></div>
+<pre><code># A tibble: 439 × 3
+# Groups:   county_name [65]
+   county_name    subject_race               n
+   &lt;chr&gt;          &lt;chr&gt;                  &lt;int&gt;
+ 1 Adams County   asian/pacific islander   582
+ 2 Adams County   black                   1208
+ 3 Adams County   hispanic                8012
+ 4 Adams County   other                     36
+ 5 Adams County   unknown                  462
+ 6 Adams County   white                  20225
+ 7 Adams County   &lt;NA&gt;                    3825
+ 8 Alamosa County asian/pacific islander    18
+ 9 Alamosa County black                     43
+10 Alamosa County hispanic                1537
+# … with 429 more rows</code></pre>
+<p>Note that each row contains information on the number of times a person from a given racial category was stopped by the traffic police in a given county. For example, in Adams County, CO, Asian/Pacific Islander motorists were stopped 582 times, Black motorists were stopped 1208 times, and white motorists were stopped 20225 times. The dataset contains information on the racial and ethnic breakdown of police stops for each county in Colorado, in the year 2010.</p>
+</div>
+<div id="reshape-the-data" class="section level2" number="4.2">
+<h2><span class="header-section-number">4.2</span> Reshape the data</h2>
+<p>Note that <code>co_county_summary</code> is currently a “long” dataset, in which there are multiple rows associated with each county; each row corresponds to a distinct county/racial category combination, and the <code>n</code> column provides information on the number of stops associated with that county/racial category pairing.</p>
+<p>It will be easier to instead work with a “wide” dataset, in which each county is associated with a single row, and each racial category is assigned to its own column. Each cell in this “wide” dataset would correspond to the number of stops associated with a given county (defined by the row) for a given racial category (defined by the column).</p>
+<p>To reshape the dataset from its current “long” format into a “wide” format, we can use the <strong><code>pivot_wider()</code></strong> function. The code below takes the current <code>co_county_summary</code> data object (in “long” format), and then transforms it into a “wide” format with the expression that reads <code>pivot_wider(names_from=subject_race, values_from=n)</code>. The <code>names_from</code> argument specifies the name of the current column which contains the categories which we want to transform into columns (here, <code>subject_race</code>), while the <code>values_from</code> argument specifies the name of the current column which contains the values that will be associated with each county/racial category combination (here, <code>n</code>). Finally, the code below assigns the transformed dataset to a new object named <code>co_county_summary_wide</code>:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="transforming-data.html#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Transforms &quot;co_county_summary&quot; from long format to wide, and assigns </span></span>
+<span id="cb18-2"><a href="transforming-data.html#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the reshaped dataset to a new object named &quot;co_county_summary_wide&quot;</span></span>
+<span id="cb18-3"><a href="transforming-data.html#cb18-3" aria-hidden="true" tabindex="-1"></a>co_county_summary_wide<span class="ot">&lt;-</span>co_county_summary <span class="sc">%&gt;%</span> </span>
+<span id="cb18-4"><a href="transforming-data.html#cb18-4" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">pivot_wider</span>(<span class="at">names_from=</span>subject_race, <span class="at">values_from=</span>n)</span></code></pre></div>
+<p>Let’s print the contents of <code>co_county_summary_wide</code> to ensure that the data has indeed been transformed into a “wide” format:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="transforming-data.html#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># prints contents of &quot;co_county_summary_wide&quot;</span></span>
+<span id="cb19-2"><a href="transforming-data.html#cb19-2" aria-hidden="true" tabindex="-1"></a>co_county_summary_wide</span></code></pre></div>
+<pre><code># A tibble: 65 × 8
+# Groups:   county_name [65]
+   county_name       `asian/pacific islander` black hispanic other unknown white  `NA`
+   &lt;chr&gt;                                &lt;int&gt; &lt;int&gt;    &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt; &lt;int&gt;
+ 1 Adams County                           582  1208     8012    36     462 20225  3825
+ 2 Alamosa County                          18    43     1537     9      30  2427   414
+ 3 Arapahoe County                        540  1819     1862    12     300 11089  1898
+ 4 Archuleta County                        17    28      392    71      41  4125   417
+ 5 Baca County                             11    61      288    NA       6   971   174
+ 6 Bent County                              8    46      314     1       6  1155   278
+ 7 Boulder County                         345   192     1050    10     180  9682  1594
+ 8 Broomfield County                       32    22      104     3      18   690   226
+ 9 Chaffee County                          43    37      361     9      71  4806  1194
+10 Cheyenne County                         10    38      147     3       2   821    85
+# … with 55 more rows</code></pre>
+<p>Indeed, we can see that each row is now associated with a single county, and each column is now associated with a given racial category.</p>
+</div>
+<div id="calculate-total-stops-for-each-county-in-co_county_summary_wide" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Calculate total stops for each county in <code>co_county_summary_wide</code></h2>
+<p>Now that we have our dataset in “wide” format, let’s create a new column, named “total_stops” that contains information on the total number of traffic stops for each county. We can create this column by calculating the sum total of stops across all of the racial categories for each county, which yields the total number of stops for each county.</p>
+<p>The code below takes the <code>co_county_summary_wide</code> object, and then calls the <strong><code>rowise()</code></strong> function, which allows us to make calculations across each row in a data frame. It then creates a new column, called “total_stops” using the now-familiar <strong><code>mutate()</code></strong> function; this “total_stops” column is populated by taking the sum of traffic stops across racial categories for each county. This is accomplished with the expression that reads <code>sum(c_across(where(is.integer)), na.rm=TRUE)</code>. This expression can be translated as follows: “for each row in the dataset, calculate the sum across the columns whenever the value in a column is an integer; whenever a cell value is ‘NA’, simply ignore it in the calculation.” We’ll assign the dataset, with the newly added “total_stops” column, back to the same <code>co_county_summary_wide</code> object; this effectively overwrites the contents of the current <code>co_county_summary_wide</code> object (a dataset without the “total_stops” column), with the new dataset (which does have the newly populated “total_stops” column).</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="transforming-data.html#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes the existing &quot;co_county_summary_wide&quot; dataset, and creates a new column </span></span>
+<span id="cb21-2"><a href="transforming-data.html#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># called &quot;total_stops&quot; that sums the values across columns for each row; </span></span>
+<span id="cb21-3"><a href="transforming-data.html#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># the revised dataset is assigned back to &quot;co_county_summary_wide&quot;, </span></span>
+<span id="cb21-4"><a href="transforming-data.html#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># which overwrites the object&#39;s previous contents with the revised dataset</span></span>
+<span id="cb21-5"><a href="transforming-data.html#cb21-5" aria-hidden="true" tabindex="-1"></a>co_county_summary_wide<span class="ot">&lt;-</span>co_county_summary_wide <span class="sc">%&gt;%</span> </span>
+<span id="cb21-6"><a href="transforming-data.html#cb21-6" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb21-7"><a href="transforming-data.html#cb21-7" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">mutate</span>(<span class="at">total_stops=</span><span class="fu">sum</span>(<span class="fu">c_across</span>(<span class="fu">where</span>(is.integer)), </span>
+<span id="cb21-8"><a href="transforming-data.html#cb21-8" aria-hidden="true" tabindex="-1"></a>                                               <span class="at">na.rm=</span><span class="cn">TRUE</span>)) </span></code></pre></div>
+<p>Let’s print the contents of the <code>co_county_summary_wide</code> object and confirm that the new column has been successfully created:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="transforming-data.html#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints updated contents of &quot;co_county_summary_wide&quot;</span></span>
+<span id="cb22-2"><a href="transforming-data.html#cb22-2" aria-hidden="true" tabindex="-1"></a>co_county_summary_wide</span></code></pre></div>
+<pre><code># A tibble: 65 × 9
+# Rowwise:  county_name
+   county_name       total_stops `asian/pacific islander` black hispanic other unknown white  `NA`
+   &lt;chr&gt;                   &lt;int&gt;                    &lt;int&gt; &lt;int&gt;    &lt;int&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt; &lt;int&gt;
+ 1 Adams County            34350                      582  1208     8012    36     462 20225  3825
+ 2 Alamosa County           4478                       18    43     1537     9      30  2427   414
+ 3 Arapahoe County         17520                      540  1819     1862    12     300 11089  1898
+ 4 Archuleta County         5091                       17    28      392    71      41  4125   417
+ 5 Baca County              1511                       11    61      288    NA       6   971   174
+ 6 Bent County              1808                        8    46      314     1       6  1155   278
+ 7 Boulder County          13053                      345   192     1050    10     180  9682  1594
+ 8 Broomfield County        1095                       32    22      104     3      18   690   226
+ 9 Chaffee County           6521                       43    37      361     9      71  4806  1194
+10 Cheyenne County          1106                       10    38      147     3       2   821    85
+# … with 55 more rows</code></pre>
+</div>
+<div id="clean-co_county_summary_wide-and-assign-to-new-object" class="section level2" number="4.4">
+<h2><span class="header-section-number">4.4</span> Clean <code>co_county_summary_wide</code> and assign to new object</h2>
+<p>Let’s clean up the <code>co_county_summmary_wide</code> dataset a bit more, so as to to make it even easier to work with. First, because our interest in this workshop is in exploring the possibility that Black motorists suffer disproportionately high traffic stop rates (relative to their share of the overall adult population), let’s create a new object that only contains the data that is essential for the subsequent analysis: the county’s name (“county_name”), the number of Black motorists that were stopped (“black”), and the total number of stops in the county across all racial categories ("total_stops).</p>
+<p>The code below takes the existing <code>co_county_summary_wide</code> object, and then uses the <strong><code>select()</code></strong> function to select the columns we want to keep. It then assigns this selection to a new object named “co_county_black_stops”:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="transforming-data.html#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Selects the &quot;county_name&quot;, &quot;black&quot;, and &quot;total_stops&quot; columns </span></span>
+<span id="cb24-2"><a href="transforming-data.html#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># from the &quot;co_county_summary_wide&quot; object, and assigns the selection </span></span>
+<span id="cb24-3"><a href="transforming-data.html#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># to a new object named &quot;co_county_black_stops&quot;</span></span>
+<span id="cb24-4"><a href="transforming-data.html#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="transforming-data.html#cb24-5" aria-hidden="true" tabindex="-1"></a>co_county_black_stops<span class="ot">&lt;-</span>co_county_summary_wide <span class="sc">%&gt;%</span></span>
+<span id="cb24-6"><a href="transforming-data.html#cb24-6" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">select</span>(county_name, black, total_stops) </span></code></pre></div>
+<p>Let’s print the contents of the newly created <code>co_county_black_stops</code> object to ensure that these changes have been successfully implemented:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="transforming-data.html#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints contents of &quot;co_county_black_stops&quot;</span></span>
+<span id="cb25-2"><a href="transforming-data.html#cb25-2" aria-hidden="true" tabindex="-1"></a>co_county_black_stops</span></code></pre></div>
+<pre><code># A tibble: 65 × 3
+# Rowwise:  county_name
+   county_name       black total_stops
+   &lt;chr&gt;             &lt;int&gt;       &lt;int&gt;
+ 1 Adams County       1208       34350
+ 2 Alamosa County       43        4478
+ 3 Arapahoe County    1819       17520
+ 4 Archuleta County     28        5091
+ 5 Baca County          61        1511
+ 6 Bent County          46        1808
+ 7 Boulder County      192       13053
+ 8 Broomfield County    22        1095
+ 9 Chaffee County       37        6521
+10 Cheyenne County      38        1106
+# … with 55 more rows</code></pre>
+<p>As expected, we now have a dataset that contains information on the total number of traffic stops for each Colorado county in 2010 (“total_stops”), and the number of traffic stops that involved Black motorists (“black”).</p>
+<p>The name of the column containing information on the number of Black motorists stopped by the traffic patrol is simply “black”, which was inherited from the initial Stanford Open Policing Project dataset. However, this column name is somewhat vague, and may cause confusion down the road when we work with census demographic data to generate our index of racial bias in traffic stops. Therefore, let’s rename that column name to “black_stops” using the <strong><code>rename()</code></strong> function, and assign that change back to <code>co_county_black_stops</code>:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="transforming-data.html#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes the existing &quot;co_county_black_stops&quot; object and renames the column named </span></span>
+<span id="cb27-2"><a href="transforming-data.html#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;black&quot; to &quot;black_stops&quot;; assigns the modified dataset back to </span></span>
+<span id="cb27-3"><a href="transforming-data.html#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;co_county_black_stops&quot;, which overwrites the existing contents of </span></span>
+<span id="cb27-4"><a href="transforming-data.html#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;co_county_black_stops&quot;</span></span>
+<span id="cb27-5"><a href="transforming-data.html#cb27-5" aria-hidden="true" tabindex="-1"></a>co_county_black_stops<span class="ot">&lt;-</span>co_county_black_stops <span class="sc">%&gt;%</span></span>
+<span id="cb27-6"><a href="transforming-data.html#cb27-6" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">rename</span>(<span class="at">black_stops=</span>black)</span></code></pre></div>
+<p>Let’s now print the modified <code>co_county_black_stops</code> object:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="transforming-data.html#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints contents of &quot;co_county_black_stops&quot;</span></span>
+<span id="cb28-2"><a href="transforming-data.html#cb28-2" aria-hidden="true" tabindex="-1"></a>co_county_black_stops</span></code></pre></div>
+<pre><code># A tibble: 65 × 3
+# Rowwise:  county_name
+   county_name       black_stops total_stops
+   &lt;chr&gt;                   &lt;int&gt;       &lt;int&gt;
+ 1 Adams County             1208       34350
+ 2 Alamosa County             43        4478
+ 3 Arapahoe County          1819       17520
+ 4 Archuleta County           28        5091
+ 5 Baca County                61        1511
+ 6 Bent County                46        1808
+ 7 Boulder County            192       13053
+ 8 Broomfield County          22        1095
+ 9 Chaffee County             37        6521
+10 Cheyenne County            38        1106
+# … with 55 more rows</code></pre>
+<p>Note that the name of the column has successfully been changed, and is now more descriptive.</p>
+<p>Finally, if we view <code>co_county_black_stops</code> within the R Studio data viewer (<code>View(co_county_black_stops)</code>), we’ll note a small quirk in the dataset. In particular, while Colorado has 64 counties, the dataset has 65 rows; one of the rows is an extra row, with an “NA” value associated with the “county_name” field, and 20 total traffic stops associated with the “NA” county. Because we’re interested in a county-level analysis, and these stops are not associated with an actual county, we’ll go ahead and delete that row with the following code, which takes the current <code>co_county_black_stops</code> object, and then uses the <strong><code>filter()</code></strong> function to select only those rows for which “county_name” is NOT EQUAl (<code>!=</code>) to “NA”; after effectively deleting the row where “county_name” is set to “NA”, the code assigns the modified dataset back to <code>co_county_black_stops</code>:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="transforming-data.html#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Takes the &quot;co_county_black_stops&quot; object and removes the row for which </span></span>
+<span id="cb30-2"><a href="transforming-data.html#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;county_name&quot; is &quot;NA&quot;; assigns the modified dataset back to </span></span>
+<span id="cb30-3"><a href="transforming-data.html#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># &quot;co_county_black_stops&quot;, which overwrites the dataset that is </span></span>
+<span id="cb30-4"><a href="transforming-data.html#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># currently assigned to that object</span></span>
+<span id="cb30-5"><a href="transforming-data.html#cb30-5" aria-hidden="true" tabindex="-1"></a>co_county_black_stops<span class="ot">&lt;-</span>co_county_black_stops <span class="sc">%&gt;%</span> </span>
+<span id="cb30-6"><a href="transforming-data.html#cb30-6" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">filter</span>(county_name<span class="sc">!=</span><span class="st">&quot;NA&quot;</span>)</span></code></pre></div>
+<p>Note that <code>co_county_black_stops</code> now contains 64 rows:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="transforming-data.html#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Prints contents of &quot;co_county_black_stops&quot;</span></span>
+<span id="cb31-2"><a href="transforming-data.html#cb31-2" aria-hidden="true" tabindex="-1"></a>co_county_black_stops</span></code></pre></div>
+<pre><code># A tibble: 64 × 3
+# Rowwise:  county_name
+   county_name       black_stops total_stops
+   &lt;chr&gt;                   &lt;int&gt;       &lt;int&gt;
+ 1 Adams County             1208       34350
+ 2 Alamosa County             43        4478
+ 3 Arapahoe County          1819       17520
+ 4 Archuleta County           28        5091
+ 5 Baca County                61        1511
+ 6 Bent County                46        1808
+ 7 Boulder County            192       13053
+ 8 Broomfield County          22        1095
+ 9 Chaffee County             37        6521
+10 Cheyenne County            38        1106
+# … with 54 more rows</code></pre>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="cleaning-and-filtering-data.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="defining-an-index-of-racial-bias-in-traffic-stops.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/aranganath24/intro_GIS/edit/master/02-lesson.Rmd",
+"text": "Edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": "https://github.com/aranganath24/intro_GIS/blob/master/02-lesson.Rmd",
+"text": null
+},
+"download": ["bookdownproj.pdf"],
+"search": {
+"engine": "fuse",
+"options": null
+},
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>
